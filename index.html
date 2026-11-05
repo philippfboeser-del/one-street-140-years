@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>One Street, 140 Years — The Bund, Shanghai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;}
+html,body{height:100%;margin:0;overscroll-behavior:none;}
+body{overflow:hidden;background:#0a0806;color:#f0e6d2;font-family:'Source Sans 3',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+button{font:inherit;}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif;margin:0;}
+p{margin:0 0 .8em;}
+[hidden]{display:none !important;}
+:root{
+  --font-head:'Playfair Display',Georgia,serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --cream:#f0e6d2;--dim:rgba(240,230,210,.7);--accent:#caa14b;
+  --glass:rgba(10,8,6,.6);--line:rgba(255,255,255,.15);
+  color-scheme:dark;
+}
+#app{position:fixed;inset:0;touch-action:none;}
+#app canvas{display:block;width:100%;height:100%;outline:none;}
+
+/* loader */
+.loader{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px 16px;
+  background:radial-gradient(ellipse 70% 55% at 50% 30%,rgba(202,161,75,.12),transparent 65%),linear-gradient(170deg,#1b1610,#07090b);transition:opacity .9s ease;}
+.loader.gone{opacity:0;pointer-events:none;}
+.loader-inner{max-width:620px;}
+.kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:1.2rem;}
+.loader h1{font-size:clamp(2.2rem,6vw,4rem);line-height:1.05;}
+.loader h1 em{font-style:italic;color:var(--accent);}
+.loader p{margin-top:1.2rem;color:var(--dim);font-size:1.05rem;}
+.load-bar{margin:1.8rem auto 0;width:min(320px,80%);height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+.load-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8a6a2a,#caa14b);transition:width .35s ease;}
+.load-label{margin-top:.8rem;font-family:var(--font-mono);font-size:.7rem;color:rgba(240,230,210,.5);min-height:1.2em;}
+.btn{background:transparent;border:1px solid var(--accent);color:#f5e4bb;font-family:var(--font-mono);font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;padding:.9em 2em;border-radius:2px;cursor:pointer;margin-top:1.6rem;transition:background .25s,color .25s;}
+.btn:hover,.btn:focus-visible{background:var(--accent);color:#1a1509;}
+.hint{margin-top:1.2rem;font-family:var(--font-mono);font-size:.68rem;color:rgba(240,230,210,.45);line-height:1.7;}
+.load-error{margin-top:1.4rem;padding:1em;border:1px solid rgba(201,82,63,.6);background:rgba(201,82,63,.12);border-radius:4px;}
+.load-error a{color:var(--accent);}
+
+/* HUD */
+.ui{position:fixed;z-index:60;opacity:0;pointer-events:none;transition:opacity .6s ease;}
+body.running .ui{opacity:1;pointer-events:auto;}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:8px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+.title{top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));padding:.55em .95em;}
+.title .t1{font-family:var(--font-head);font-size:1.05rem;}
+.title .t2{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-top:.15em;}
+.title a{color:var(--dim);font-family:var(--font-mono);font-size:.6rem;text-decoration:none;display:inline-block;margin-top:.35em;}
+.title a:hover{color:var(--cream);}
+.tools{top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:62vw;}
+.tbtn{height:36px;min-width:36px;padding:0 .8em;border-radius:18px;cursor:pointer;background:var(--glass);border:1px solid var(--line);color:var(--cream);
+  font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:.4em;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:background .2s,border-color .2s;}
+.tbtn:hover,.tbtn:focus-visible{border-color:var(--accent);}
+.tbtn.on{background:var(--accent);color:#1a1509;border-color:var(--accent);}
+.tbtn svg{width:16px;height:16px;flex:none;}
+.seg{display:flex;gap:2px;padding:2px;border-radius:18px;background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+.seg .tbtn{border:none;background:transparent;height:30px;min-width:30px;padding:0 .65em;}
+.seg .tbtn.on{background:var(--accent);color:#1a1509;}
+
+.views{top:calc(max(14px,env(safe-area-inset-top)) + 46px);right:max(14px,env(safe-area-inset-right));}
+
+/* era card */
+.era{left:max(14px,env(safe-area-inset-left));bottom:calc(118px + env(safe-area-inset-bottom));width:min(320px,calc(100vw - 28px));padding:.85em 1em;}
+.era .e-tag{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);}
+.era h2{font-size:1.2rem;margin:.2em 0 .4em;padding-right:24px;}
+.era p{font-size:.86rem;color:var(--dim);line-height:1.45;margin:0;}
+.era .e-link{display:inline-block;margin-top:.7em;font-family:var(--font-mono);font-size:.64rem;color:var(--accent);text-decoration:none;letter-spacing:.06em;}
+.era .e-link:hover{text-decoration:underline;}
+.era.min p,.era.min .e-link{display:none;}
+.era .e-toggle{position:absolute;top:.6em;right:.6em;background:none;border:none;color:var(--dim);cursor:pointer;font-size:.9rem;}
+
+/* timeline */
+.timeline{left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(880px,calc(100vw - 28px));padding:.7em 1.1em .85em;}
+.tl-top{display:flex;align-items:flex-end;gap:1em;margin-bottom:.35em;}
+.year{font-family:var(--font-head);font-size:2.1rem;line-height:1;font-variant-numeric:tabular-nums;min-width:3.2ch;}
+.tl-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1;justify-content:flex-end;}
+.chip{border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:14px;padding:.25em .7em;font-family:var(--font-mono);font-size:.62rem;cursor:pointer;letter-spacing:.04em;}
+.chip.on{border-color:var(--accent);color:var(--cream);background:rgba(202,161,75,.2);}
+.chip.locked{opacity:.4;cursor:not-allowed;border-style:dashed;}
+.slider-wrap{position:relative;height:30px;}
+.ticks{position:absolute;left:0;right:0;top:0;height:30px;pointer-events:none;}
+.ticks span{position:absolute;top:21px;font-family:var(--font-mono);font-size:.56rem;color:rgba(240,230,210,.45);transform:translateX(-50%);}
+.ticks i{position:absolute;top:6px;width:1px;height:10px;background:rgba(240,230,210,.3);}
+.locked-zone{position:absolute;top:8px;height:6px;right:0;border-radius:3px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.08) 0 4px,transparent 4px 8px);}
+input[type=range]{position:absolute;inset:0 0 auto 0;width:100%;height:22px;margin:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,#caa14b,#c99a4b 34%,#c2523f 52%,#e8c14a 66%,#6fd6bd);}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:linear-gradient(90deg,#caa14b,#c99a4b 34%,#c2523f 52%,#e8c14a 66%,#6fd6bd);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;border-radius:50%;background:#f5e4bb;border:3px solid #1a1509;box-shadow:0 0 0 2px var(--accent),0 4px 12px rgba(0,0,0,.5);}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#f5e4bb;border:3px solid #1a1509;box-shadow:0 0 0 2px var(--accent);}
+input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:4px;}
+
+/* hotspots */
+.hotspots{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .4s;}
+body.running .hotspots{opacity:1;}
+.hs{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;border:none;background:none;padding:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;transition:opacity .3s;}
+.hs .dot{width:26px;height:26px;border-radius:50%;background:rgba(10,8,6,.7);border:2px solid var(--accent);color:var(--cream);font-family:var(--font-mono);font-size:.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(202,161,75,.6);animation:pulse 2.4s infinite;}
+.hs .lab{font-family:var(--font-mono);font-size:.62rem;color:var(--cream);background:rgba(10,8,6,.6);padding:.25em .55em;border-radius:3px;white-space:nowrap;opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .2s;}
+.hs:hover .lab,.hs:focus-visible .lab,body.touch .hs .lab{opacity:1;transform:none;}
+.hs.far{opacity:.55;}
+.hs.hide{opacity:0;pointer-events:none;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(202,161,75,.55);}70%{box-shadow:0 0 0 12px rgba(202,161,75,0);}100%{box-shadow:0 0 0 0 rgba(202,161,75,0);}}
+
+/* info panel */
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);z-index:120;background:linear-gradient(165deg,rgba(35,27,18,.96),rgba(18,14,10,.97));border-left:1px solid rgba(255,255,255,.15);
+  transform:translateX(105%);transition:transform .5s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;-webkit-user-select:text;user-select:text;}
+.panel.open{transform:none;}
+.panel-scroll{flex:1;overflow-y:auto;padding:2rem 1.7rem 1.4rem;overscroll-behavior:contain;}
+.p-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:var(--cream);font-size:1.2rem;cursor:pointer;}
+.p-eyebrow{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.6rem;padding-right:40px;}
+.p-title{font-size:1.7rem;line-height:1.15;margin-bottom:.9rem;}
+.p-body p{color:var(--dim);font-size:1rem;line-height:1.55;}
+.p-why{border-left:3px solid var(--accent);padding:.7em 1em;margin:1rem 0;background:rgba(255,255,255,.04);font-size:.95rem;line-height:1.45;}
+.p-why strong{color:var(--accent);}
+.p-foot{display:flex;gap:8px;align-items:center;padding:.8rem 1.4rem calc(.8rem + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.1);}
+.p-foot button{background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--cream);font-family:var(--font-mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;padding:.55em .9em;border-radius:2px;cursor:pointer;}
+.p-foot button:hover{border-color:var(--accent);}
+.p-foot span{flex:1;}
+
+.toast{left:50%;top:70px;transform:translateX(-50%);padding:.55em 1em;font-family:var(--font-mono);font-size:.7rem;opacity:0 !important;pointer-events:none !important;transition:opacity .4s;}
+.toast.show{opacity:1 !important;}
+.joystick{left:max(18px,env(safe-area-inset-left));bottom:calc(130px + env(safe-area-inset-bottom));width:110px;height:110px;border-radius:50%;background:rgba(10,8,6,.3);border:1px solid rgba(255,255,255,.2);display:none;touch-action:none;}
+.joy-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(202,161,75,.55);border:1px solid rgba(255,255,255,.4);}
+body.touch.stand .joystick{display:block;}
+.help{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;background:rgba(6,5,4,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:16px;}
+.help-card{max-width:480px;width:100%;padding:1.5rem;}
+.help-card h3{font-size:1.35rem;margin-bottom:.8rem;}
+.help-card td{padding:.35em 0;color:var(--dim);vertical-align:top;font-size:.92rem;}
+.help-card td:first-child{font-family:var(--font-mono);font-size:.72rem;color:var(--accent);padding-right:1em;white-space:nowrap;}
+.fader{position:fixed;inset:0;z-index:250;background:#050403;opacity:0;pointer-events:none;transition:opacity .4s;}
+.fader.on{opacity:1;}
+
+@media (max-width:760px){
+  .tools{max-width:calc(100vw - 150px);}
+  .tbtn .lbl{display:none;}
+  .era{bottom:calc(132px + env(safe-area-inset-bottom));}
+  .era.min{width:auto;}
+  .year{font-size:1.6rem;}
+  .panel{top:auto;height:60vh;width:100%;transform:translateY(105%);border-left:none;border-top:1px solid rgba(255,255,255,.15);border-radius:12px 12px 0 0;}
+  .panel.open{transform:none;}
+  .ticks span{font-size:.5rem;}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.001ms !important;animation:none !important;}}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="app" aria-label="3D view of the Bund in Shanghai"></div>
+
+<div class="loader" id="loader">
+  <div class="loader-inner">
+    <div class="kicker">A School Exhibition · Economic History</div>
+    <h1>One Street,<br><em>140 Years</em></h1>
+    <p>Stand on the Bund in Shanghai and move through time from 1839 to today. Watch one riverbank change with every era of modern China's economy, from a muddy towpath to the world's busiest port.</p>
+    <div class="load-bar"><span id="loadFill"></span></div>
+    <div class="load-label" id="loadLabel">Preparing the riverbank…</div>
+    <button class="btn" id="enterBtn" hidden>Step onto the Bund</button>
+    <div class="hint">Drag the timeline to travel through time · drag to look around · tap the numbered markers<br>Walk with WASD or the on-screen joystick</div>
+    <div class="load-error" id="loadError" hidden></div>
+  </div>
+</div>
+
+<div class="ui glass title" id="titleBox">
+  <div class="t1">One Street, 140 Years</div>
+  <div class="t2">The Bund · Shanghai</div>
+  <a href="https://philippfboeser-del.github.io/my-modern-china/">← My Modern China museum</a>
+</div>
+
+<div class="ui tools" id="tools">
+  <div class="seg" id="todSeg" role="group" aria-label="Time of day"></div>
+  <button class="tbtn" id="qualBtn" title="Graphics quality"><span id="qualLbl">High</span></button>
+  <button class="tbtn" id="helpBtn" title="Help" aria-label="Help">?</button>
+</div>
+<div class="ui seg views" id="viewSeg" role="group" aria-label="Viewpoints"></div>
+
+<div class="ui glass era" id="eraCard">
+  <button class="e-toggle" id="eraToggle" aria-label="Collapse">–</button>
+  <div class="e-tag" id="eraTag"></div>
+  <h2 id="eraTitle"></h2>
+  <p id="eraText"></p>
+  <a class="e-link" id="eraLink" href="https://philippfboeser-del.github.io/my-modern-china/"></a>
+</div>
+
+<div class="ui glass timeline" id="timeline">
+  <div class="tl-top">
+    <div class="year" id="yearLbl">1839</div>
+    <div class="tl-chips" id="chips"></div>
+  </div>
+  <div class="slider-wrap">
+    <div class="ticks" id="ticks"></div>
+    <input type="range" id="yearSlider" min="1839" max="2025" step="1" value="1839" aria-label="Year">
+  </div>
+</div>
+
+<div class="hotspots" id="hotspots"></div>
+<div class="ui glass toast" id="toast"></div>
+<div class="ui joystick" id="joystick"><div class="joy-knob" id="joyKnob"></div></div>
+
+<aside class="panel" id="panel" aria-hidden="true">
+  <button class="p-close" id="pClose" aria-label="Close">&times;</button>
+  <div class="panel-scroll" id="pScroll">
+    <div class="p-eyebrow" id="pEyebrow"></div>
+    <h3 class="p-title" id="pTitle"></h3>
+    <div class="p-body" id="pBody"></div>
+    <div class="p-why" id="pWhy"></div>
+  </div>
+  <div class="p-foot"><button id="pPrev">‹ Prev</button><span></span><button id="pNext">Next ›</button></div>
+</aside>
+
+<div class="help" id="help" hidden>
+  <div class="glass help-card">
+    <h3>How to explore</h3>
+    <table>
+      <tr><td>Timeline</td><td>Drag the slider or tap an era. Buildings appear in the year they were really built.</td></tr>
+      <tr><td>Look</td><td>Drag on the view. Pinch or scroll to zoom.</td></tr>
+      <tr><td>Walk</td><td>WASD / arrow keys or the joystick, along the promenade.</td></tr>
+      <tr><td>Views</td><td>Jump to the promenade, the facades, the river, Pudong or a bird's-eye view.</td></tr>
+      <tr><td>Markers</td><td>Tap a numbered marker to read what happened there.</td></tr>
+      <tr><td>Sun / moon</td><td>Switch between dawn, day, sunset and night.</td></tr>
+    </table>
+    <button class="btn" id="helpClose">Got it</button>
+  </div>
+</div>
+<div class="fader" id="fader"></div>
+
+<script type="module">
+/* =====================================================================
+   CONTENT
+   ===================================================================== */
+const ERAS = [
+  {from:1839, to:1900, tag:"Era I · 1839 – 1900", title:"Forced Opening", room:"Room I",
+   text:"After the Opium War, Shanghai becomes a treaty port in 1843. A muddy towpath north of the walled Chinese city turns into the waterfront of the British Settlement: merchant houses with verandahs, opium firms and a foreign-run Customs House."},
+  {from:1900, to:1937, tag:"Era II · 1900 – 1937", title:"Industrialisation", room:"Room II",
+   text:"Banks, hotels and trading houses rise in granite and marble. Trams run along the Bund, foreign warships anchor in the river, and across the water Pudong fills with wharves, warehouses and factories."},
+  {from:1937, to:1949, tag:"Era III · 1937 – 1949", title:"War Economy", room:"Room III", locked:true},
+  {from:1949, to:1978, tag:"Era IV · 1949 – 1978", title:"Planned Economy", room:"Room IV", locked:true},
+  {from:1978, to:2026, tag:"Era V · 1978 – Today", title:"Reform & Opening-Up", room:"Room V", locked:true}
+];
+const MAX_YEAR_NOW = 1936; // build stage 1
+const MUSEUM_URL = "https://philippfboeser-del.github.io/my-modern-china/";
+
+const HOTSPOTS = [
+  {era:0, anchor:[-156, 6, 60], title:"A muddy towpath",
+   body:"<p>Before 1843 this riverbank was a muddy towpath along the Huangpu River, just north of the walled Chinese city of Shanghai.</p><p>After the Treaty of Nanjing, Shanghai opened as a treaty port in November 1843. In 1845 the Land Regulations set aside the land here for British merchants, and the British Settlement began. Its waterfront was called the Bund, an Anglo-Indian word for an embankment.</p>",
+   why:"The Bund exists because of the forced opening told in Room I of the museum."},
+  {era:0, anchor:[-215, 16, -225], title:"Jardine Matheson & Co.",
+   body:"<p>One of the first firms on the Bund was Jardine Matheson, a Scottish trading house that had grown rich by shipping Indian opium to China.</p><p>Its offices stood on the Bund for about a century. Behind their airy verandahs, merchants traded opium, tea and silk, and soon also ran shipping lines, insurance and banking.</p>",
+   why:"The same firms that profited from the opium trade built the first foreign waterfront in China."},
+  {era:0, anchor:[-215, 18, -50], title:"The Customs House",
+   body:"<p>From 1854 foreign inspectors helped collect China's customs duties in Shanghai. From 1863 the entire Chinese Maritime Customs Service was run by a Briton, Robert Hart.</p><p>The first Customs House here looked like a Chinese government office; in 1893 it was replaced by a red-brick building with a clock tower.</p>",
+   why:"China's most important source of tax money was collected by foreigners, on a foreign-controlled waterfront."},
+  {era:0, anchor:[-60, 12, -120], title:"Ships on the Huangpu",
+   body:"<p>Tall sailing ships and, later, steamships carried tea and silk out of China and opium and cotton goods in.</p><p>Chinese junks and small sampans still handled most local trade along the coast and up the rivers.</p>",
+   why:"Foreign ships controlled long-distance trade; Chinese boats kept the local economy moving."},
+  {era:0, anchor:[-172, 8, -320], title:"The Public Garden",
+   body:"<p>The Public Garden opened in 1868 on reclaimed land at the north end of the Bund.</p><p>Its rules barred most Chinese from entering until 1928, even though Chinese residents paid most of the Settlement's taxes.</p>",
+   why:"Who could use the waterfront showed who held power in the treaty port."},
+  {era:1, anchor:[-215, 46, -5], title:"The HSBC Building (1923)",
+   body:"<p>The Hongkong and Shanghai Banking Corporation building, finished in 1923, was one of the largest bank buildings in the world, with a great dome over its banking hall.</p><p>HSBC financed foreign trade, issued banknotes and lent money to Chinese governments, often secured on China's customs revenue.</p>",
+   why:"Foreign banks became the creditors of the Chinese state, the theme of Room II."},
+  {era:1, anchor:[-212, 62, -50], title:"The Customs House (1927)",
+   body:"<p>The third Customs House, opened in 1927, has a clock tower modelled on London's Big Ben. People called its bell \"Big Ching\".</p><p>It collected duties on all trade passing through Shanghai, China's largest port. China only regained full control of its tariffs around 1929.</p>",
+   why:"The tariff question from Room I was still not settled when this tower was built."},
+  {era:1, anchor:[-205, 72, -150], title:"The Cathay Hotel (1929)",
+   body:"<p>Victor Sassoon, whose family fortune began in the opium and cotton trade, built Sassoon House with the Cathay Hotel in 1929. Its green pyramid roof became a symbol of Shanghai's glamour.</p><p>Shanghai had become China's biggest port, its financial centre and its largest industrial city, with more than three million people by the 1930s.</p>",
+   why:"Wealth from the old trade was reinvested in property, banking and factories."},
+  {era:1, anchor:[-180, 6, 90], title:"Trams on the Bund (1908)",
+   body:"<p>Electric trams began running in Shanghai in 1908. Rickshaws, cars and trams shared the Bund with dockworkers carrying goods from the ships.</p><p>Millions of migrants came from the countryside to work in mills, docks and workshops.</p>",
+   why:"Modern city life arrived on the coast first, the \"Two Chinas\" of Room II."},
+  {era:1, anchor:[-20, 14, 120], title:"Foreign warships",
+   body:"<p>Britain, the United States, Japan and other powers kept warships anchored in the Huangpu to protect their citizens and trade.</p><p>The gunboats that forced China open in 1842 had never really left.</p>",
+   why:"Political power stood behind the economic boom, a reminder of how fragile it was."},
+  {era:1, anchor:[230, 18, -60], title:"Pudong: wharves and factories",
+   body:"<p>Across the river, Pudong filled with wharves, warehouses, shipyards and factories, while most people there still lived in farming villages.</p><p>The riverbank became a working harbour, connected to the world by the steamers in the river.</p>",
+   why:"Industry clustered along the water, exactly where it would be hit first in 1937 (Room III)."}
+];
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+function setLoad(p, label){ $("loadFill").style.width = Math.round(p*100) + "%"; if(label) $("loadLabel").textContent = label; }
+function showError(msg){ const b = $("loadError"); b.hidden = false; b.innerHTML = msg + '<br>You can still visit the <a href="' + MUSEUM_URL + '">3D museum</a>.'; $("loadLabel").textContent = ""; }
+
+boot();
+async function boot(){
+  setLoad(.05, "Loading the 3D engine…");
+  let THREE, mods;
+  try {
+    THREE = await import("three");
+    mods = await Promise.all([
+      import("three/addons/controls/OrbitControls.js"),
+      import("three/addons/objects/Sky.js"),
+      import("three/addons/objects/Water.js"),
+      import("three/addons/postprocessing/EffectComposer.js"),
+      import("three/addons/postprocessing/RenderPass.js"),
+      import("three/addons/postprocessing/UnrealBloomPass.js"),
+      import("three/addons/postprocessing/OutputPass.js")
+    ]);
+  } catch(e){ console.warn(e); showError("The 3D engine could not be loaded. Please check your internet connection."); return; }
+  try { const c = document.createElement("canvas"); if(!(c.getContext("webgl2") || c.getContext("webgl"))) throw 0; }
+  catch(e){ showError("This browser or device does not support WebGL."); return; }
+  setLoad(.18, "Loading typefaces…");
+  try { await Promise.race([Promise.all([document.fonts.load('700 40px "Playfair Display"'), document.fonts.load('500 20px "IBM Plex Mono"')]), sleep(2500)]); } catch(e){}
+  let app;
+  try {
+    app = await createApp(THREE, {
+      OrbitControls:mods[0].OrbitControls, Sky:mods[1].Sky, Water:mods[2].Water,
+      EffectComposer:mods[3].EffectComposer, RenderPass:mods[4].RenderPass, UnrealBloomPass:mods[5].UnrealBloomPass, OutputPass:mods[6].OutputPass
+    });
+  } catch(e){ console.error(e); showError("Something went wrong while building the scene."); return; }
+  setLoad(1, "Ready.");
+  $("enterBtn").hidden = false; $("enterBtn").focus();
+  $("enterBtn").addEventListener("click", () => app.enter());
+}
+
+/* =====================================================================
+   THE SCENE
+   ===================================================================== */
+async function createApp(THREE, X){
+  const {Vector3, Vector2, Color, Group, Mesh, Quaternion, Euler, BoxGeometry, CylinderGeometry, SphereGeometry, PlaneGeometry, ConeGeometry, Shape, ExtrudeGeometry,
+    MeshStandardMaterial, MeshBasicMaterial, CanvasTexture, SRGBColorSpace, RepeatWrapping, InstancedMesh, Matrix4, Object3D, Sprite, SpriteMaterial, AdditiveBlending, DoubleSide} = THREE;
+  const TOUCH = matchMedia("(pointer: coarse)").matches;
+  if(TOUCH) document.body.classList.add("touch");
+
+  /* ---------- world dimensions (metres; north = -z, Pudong = +x) ---------- */
+  const QUAY = 3;                 // land height above the water
+  const RIVER_W = 300, WEST = -150, EAST = 150;
+  const FRONT = -200;             // facade line of the Bund
+  const EYE = 1.7;
+
+  /* ---------- renderer ---------- */
+  setLoad(.24, "Setting up the renderer…");
+  const quality = {level: TOUCH ? "medium" : "high"};
+  try { const q = localStorage.getItem("bund-quality"); if(q) quality.level = q; } catch(e){}
+  const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:"high-performance"});
+  const dprFor = () => Math.min(window.devicePixelRatio || 1, quality.level === "high" ? 1.5 : quality.level === "medium" ? 1.25 : 1);
+  renderer.setPixelRatio(dprFor());
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = .5;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  $("app").appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0xb8c4cc, .0009);
+  const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, .3, 30000);
+  camera.rotation.order = "YXZ";
+
+  /* ---------- helpers ---------- */
+  const matCache = new Map();
+  const std = (key, p) => { if(!matCache.has(key)) matCache.set(key, new MeshStandardMaterial(Object.assign({roughness:.8, metalness:0}, p))); return matCache.get(key); };
+  const mesh = (geo, mat, x=0, y=0, z=0, cast=true) => { const m = new Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = true; return m; };
+  function rnd(seed){ let s = seed >>> 0 || 1; return () => { s = (s*1664525 + 1013904223) >>> 0; return s/4294967296; }; }
+  function canvasTex(w, h, draw, repeat){ const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; t.anisotropy = 8; if(repeat){ t.wrapS = t.wrapT = RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); } return t; }
+  function shade(hex, k){ const c = new Color(hex); c.multiplyScalar(k); return "#" + c.getHexString(); }
+  const glowTex = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w/2, h/2, 0, w/2, h/2, w/2); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.3, "rgba(255,255,255,.4)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+  const smokeTex = canvasTex(128, 128, (g, w, h) => { const r = rnd(4); for(let i=0;i<14;i++){ const x = w/2 + (r()-.5)*40, y = h/2 + (r()-.5)*40, rr = 20 + r()*30; const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, "rgba(255,255,255,.35)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h); } });
+
+  /* ---------- time-dependent objects ---------- */
+  const timed = [];   // {obj, from, to, k, mode, base}
+  function addTimed(obj, from, to, mode="grow"){
+    const rec = {obj, from, to, k:0, mode, base:obj.scale.clone()};
+    obj.visible = false; timed.push(rec); return obj;
+  }
+  let year = 1839, shownYear = 1839;
+  function updateTimed(dt){
+    const rate = Math.min(1, dt*2.2);
+    for(const t of timed){
+      const target = (year >= t.from && year < t.to) ? 1 : 0;
+      if(Math.abs(target - t.k) < .001){ t.k = target; }
+      else t.k += (target - t.k)*rate;
+      const k = t.k;
+      t.obj.visible = k > .003;
+      if(!t.obj.visible) continue;
+      const e = k*k*(3 - 2*k);
+      if(t.mode === "grow") t.obj.scale.set(t.base.x, Math.max(.001, t.base.y*e), t.base.z);
+      else t.obj.scale.set(t.base.x*Math.max(.001, e), t.base.y*Math.max(.001, e), t.base.z*Math.max(.001, e));
+    }
+  }
+
+  /* =====================================================================
+     TEXTURES
+     ===================================================================== */
+  const nightMats = [];   // materials whose emissive glows at night
+  /* facade: map + emissive map share the same window layout */
+  function facade(o){
+    const W = 512, H = Math.max(128, Math.min(1024, Math.round(512*o.h/o.w)));
+    const r = rnd(o.seed || 1);
+    const floors = o.floors, bays = o.bays;
+    const fh = H/floors, bw = W/bays;
+    const wins = [];
+    for(let f=0; f<floors; f++) for(let b=0; b<bays; b++){
+      const top = f === floors - 1 && o.attic;
+      const ww = bw*(o.style === "verandah" ? .74 : top ? .36 : .44), wh = fh*(o.style === "verandah" ? .78 : f === 0 ? .62 : top ? .4 : .56);
+      wins.push({x:b*bw + (bw - ww)/2, y:H - (f + 1)*fh + (fh - wh)*(f === 0 ? .7 : .5), w:ww, h:wh, f, arch:o.style === "verandah" || (f === 0 && o.style !== "brick")});
+    }
+    const map = canvasTex(W, H, (g) => {
+      g.fillStyle = o.stone; g.fillRect(0, 0, W, H);
+      for(let i=0;i<W*H/220;i++){ g.fillStyle = r() > .5 ? "rgba(255,255,255,.035)" : "rgba(0,0,0,.05)"; g.fillRect(r()*W, r()*H, 2, 2); }
+      if(o.style === "brick"){ for(let y=0;y<H;y+=6){ g.fillStyle = "rgba(0,0,0,.08)"; g.fillRect(0, y, W, 1); } g.fillStyle = o.band || "#e8e0d0"; for(let f=1; f<floors; f++) g.fillRect(0, H - f*fh - 3, W, 6); }
+      if(o.rustic){ g.fillStyle = "rgba(0,0,0,.18)"; for(let y = H - fh*o.rustic; y < H; y += 9) g.fillRect(0, y, W, 2); }
+      if(o.columns){ const [f0, f1] = o.columns; for(let b=0;b<=bays;b++){ const x = b*bw; g.fillStyle = "rgba(255,255,255,.14)"; g.fillRect(x - 6, H - (f1 + 1)*fh, 12, (f1 - f0 + 1)*fh); g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(x + 6, H - (f1 + 1)*fh, 3, (f1 - f0 + 1)*fh); } }
+      if(o.piers){ for(let b=0;b<=bays;b++){ g.fillStyle = "rgba(255,255,255,.1)"; g.fillRect(b*bw - 4, 0, 8, H); } }
+      g.fillStyle = "rgba(0,0,0,.25)"; g.fillRect(0, 0, W, 6); g.fillStyle = "rgba(255,255,255,.12)"; g.fillRect(0, 6, W, 4);
+      if(o.cornice !== false){ g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(0, fh*.5, W, 5); }
+      wins.forEach(wd => {
+        const gr = g.createLinearGradient(0, wd.y, 0, wd.y + wd.h); gr.addColorStop(0, o.style === "verandah" ? "#2a2620" : "#2c3640"); gr.addColorStop(1, o.style === "verandah" ? "#151310" : "#141a20");
+        g.fillStyle = gr;
+        if(wd.arch){ g.beginPath(); g.moveTo(wd.x, wd.y + wd.h); g.lineTo(wd.x, wd.y + wd.w/2); g.arc(wd.x + wd.w/2, wd.y + wd.w/2, wd.w/2, Math.PI, 0); g.lineTo(wd.x + wd.w, wd.y + wd.h); g.closePath(); g.fill(); }
+        else g.fillRect(wd.x, wd.y, wd.w, wd.h);
+        if(o.style !== "verandah"){ g.strokeStyle = "rgba(255,255,255,.18)"; g.lineWidth = 1.5; g.strokeRect(wd.x, wd.y, wd.w, wd.h); g.fillStyle = "rgba(255,255,255,.08)"; g.fillRect(wd.x + 2, wd.y + 2, wd.w*.4, wd.h*.5); g.fillStyle = "rgba(0,0,0,.25)"; g.fillRect(wd.x - 2, wd.y + wd.h, wd.w + 4, 3); }
+        else { g.fillStyle = "rgba(240,235,220,.85)"; g.fillRect(wd.x - 4, wd.y + wd.h - 2, wd.w + 8, 3); }
+      });
+    });
+    const em = canvasTex(W, H, (g) => {
+      g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+      wins.forEach(wd => { if(r() < (o.lit ?? .55)){ g.fillStyle = r() < .85 ? "#ffcf8a" : "#fff0d0"; g.globalAlpha = .5 + r()*.5; g.fillRect(wd.x + 2, wd.y + 2, wd.w - 4, wd.h - 4); g.globalAlpha = 1; } });
+    });
+    const mat = new MeshStandardMaterial({map, emissiveMap:em, emissive:0xffffff, emissiveIntensity:0, roughness:o.rough ?? .85, metalness:0, envMapIntensity:.6});
+    nightMats.push({m:mat, k:o.glow ?? 1});
+    return mat;
+  }
+  function stoneMat(color, key){ return std("stone" + key, {color, roughness:.88}); }
+
+  /* procedural, tileable water normals */
+  const waterNormals = (() => {
+    const N = 256, c = document.createElement("canvas"); c.width = c.height = N; const g = c.getContext("2d"); const img = g.createImageData(N, N);
+    const r = rnd(9); const waves = Array.from({length:14}, () => ({kx:Math.round((r() - .5)*16), ky:Math.round((r() - .5)*16) || 1, a:.3 + r(), p:r()*Math.PI*2}));
+    const hgt = (x, y) => waves.reduce((s, w) => s + w.a*Math.sin(2*Math.PI*(w.kx*x + w.ky*y)/N + w.p), 0);
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+      const dx = hgt(x + 1, y) - hgt(x - 1, y), dy = hgt(x, y + 1) - hgt(x, y - 1);
+      const nx = -dx*.35, ny = -dy*.35, nz = 1, l = Math.hypot(nx, ny, nz);
+      const i = (y*N + x)*4; img.data[i] = (nx/l*.5 + .5)*255; img.data[i+1] = (ny/l*.5 + .5)*255; img.data[i+2] = (nz/l*.5 + .5)*255; img.data[i+3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const t = new CanvasTexture(c); t.wrapS = t.wrapT = RepeatWrapping; return t;
+  })();
+
+  /* =====================================================================
+     SKY, SUN, ENVIRONMENT, WATER
+     ===================================================================== */
+  setLoad(.3, "Painting the sky…"); await nextFrame();
+  const sky = new X.Sky(); sky.scale.setScalar(20000); scene.add(sky);
+  const sunDir = new Vector3();
+  const sun = new THREE.DirectionalLight(0xffffff, 2.5);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, {left:-260, right:260, top:260, bottom:-260, near:10, far:2600});
+  sun.shadow.bias = -.0003; sun.shadow.normalBias = .6;
+  scene.add(sun); scene.add(sun.target);
+  const hemi = new THREE.HemisphereLight(0xbfd4ff, 0x4a3c2a, .4); scene.add(hemi);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const envScene = new THREE.Scene();
+  let envRT = null;
+
+  const TOD = {
+    dawn:  {label:"Dawn",   elev:3,   az:95,  turb:8,  ray:2.6, mie:.008, sun:0xffa060, sunI:1.8, hemi:.35, fog:0xb8957e, fogD:.0007, exp:.42, night:.25},
+    day:   {label:"Day",    elev:42,  az:150, turb:5,  ray:1.2, mie:.005, sun:0xfff1dc, sunI:2.8, hemi:.55, fog:0xaebdc8, fogD:.00045, exp:.36, night:0},
+    sunset:{label:"Sunset", elev:2.5, az:262, turb:9,  ray:3,   mie:.01,  sun:0xff7a3a, sunI:1.5, hemi:.3,  fog:0xb88a72, fogD:.0006,  exp:.44, night:.45},
+    night: {label:"Night",  elev:-6,  az:280, turb:2,  ray:.5,  mie:.003, sun:0x8aa0ff, sunI:.18, hemi:.12, fog:0x101624, fogD:.0008, exp:.75, night:1}
+  };
+  let tod = "day";
+  const todState = {night:0, exp:.36, fog:new Color(0xaebdc8), fogD:.00045};
+  function applyTod(key, instant){
+    tod = key; const T = TOD[key];
+    const phi = THREE.MathUtils.degToRad(90 - T.elev), theta = THREE.MathUtils.degToRad(T.az);
+    sunDir.setFromSphericalCoords(1, phi, theta);
+    const u = sky.material.uniforms;
+    u.turbidity.value = T.turb; u.rayleigh.value = T.ray; u.mieCoefficient.value = T.mie; u.mieDirectionalG.value = .8;
+    u.sunPosition.value.copy(sunDir);
+    sun.color.set(T.sun); sun.intensity = T.sunI; hemi.intensity = T.hemi;
+    if(key === "night"){ sunDir.set(-.3, .6, .2).normalize(); }
+    if(water) water.material.uniforms.sunDirection.value.copy(sunDir.clone().normalize());
+    if(water) water.material.uniforms.sunColor.value.set(key === "night" ? 0x4a5a80 : T.sun);
+    envScene.add(sky);
+    if(envRT) envRT.dispose();
+    envRT = pmrem.fromScene(envScene);
+    scene.add(sky);
+    scene.environment = envRT.texture;
+    todState.target = T;
+    if(instant){ todState.night = T.night; todState.exp = T.exp; todState.fog.set(T.fog); todState.fogD = T.fogD; }
+    document.querySelectorAll("#todSeg .tbtn").forEach(b => b.classList.toggle("on", b.dataset.k === key));
+    stars.visible = key === "night";
+  }
+
+  /* stars */
+  const stars = (() => {
+    const n = 900, p = new Float32Array(n*3), r = rnd(3);
+    for(let i=0;i<n;i++){ const th = r()*Math.PI*2, ph = Math.acos(r()*.95); p[i*3] = Math.sin(ph)*Math.cos(th)*9000; p[i*3+1] = Math.cos(ph)*9000; p[i*3+2] = Math.sin(ph)*Math.sin(th)*9000; }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(p, 3));
+    const s = new THREE.Points(geo, new THREE.PointsMaterial({color:0xffffff, size:1.4, sizeAttenuation:false, fog:false, transparent:true, opacity:.7})); s.visible = false; scene.add(s); return s;
+  })();
+
+  /* water: reflective shader (high/medium) or simple material (low) */
+  let water = null, simpleWater = null;
+  const waterGeo = new PlaneGeometry(RIVER_W + 40, 24000);
+  function buildWater(){
+    if(water){ scene.remove(water); water.material.dispose(); water = null; }
+    if(simpleWater){ scene.remove(simpleWater); simpleWater = null; }
+    if(quality.level !== "low"){
+      water = new X.Water(waterGeo, {textureWidth:quality.level === "high" ? 1024 : 512, textureHeight:quality.level === "high" ? 1024 : 512, waterNormals, sunDirection:sunDir.clone(), sunColor:0xffffff, waterColor:0x24342c, distortionScale:2.2, fog:true});
+      water.material.uniforms.size.value = 2.2;
+      water.rotation.x = -Math.PI/2; water.position.y = 0; scene.add(water);
+    } else {
+      waterNormals.repeat.set(30, 600);
+      simpleWater = new Mesh(waterGeo, new MeshStandardMaterial({color:0x2a3a32, roughness:.12, metalness:.4, normalMap:waterNormals, normalScale:new Vector2(.6, .6)}));
+      simpleWater.rotation.x = -Math.PI/2; scene.add(simpleWater);
+    }
+  }
+  buildWater();
+
+  /* post-processing */
+  let composer, bloom;
+  function buildComposer(){
+    composer = new X.EffectComposer(renderer);
+    composer.setPixelRatio(dprFor());
+    composer.setSize(innerWidth, innerHeight);
+    composer.addPass(new X.RenderPass(scene, camera));
+    bloom = new X.UnrealBloomPass(new Vector2(innerWidth/2, innerHeight/2), .35, .5, .88);
+    composer.addPass(bloom);
+    composer.addPass(new X.OutputPass());
+  }
+  buildComposer();
+
+  /* =====================================================================
+     GROUND: both banks, quays, Bund road, promenade, Pudong fields
+     ===================================================================== */
+  setLoad(.38, "Laying out the riverbanks…"); await nextFrame();
+  const paveTex = canvasTex(256, 256, (g, w, h) => { const r = rnd(5); g.fillStyle = "#6e665a"; g.fillRect(0, 0, w, h); for(let y=0;y<h;y+=32) for(let x=0;x<w;x+=64){ g.fillStyle = shade("#6e665a", .85 + r()*.3); g.fillRect(x + ((y/32) % 2)*32 + 1, y + 1, 62, 30); } }, [1, 1]);
+  const roadTex = canvasTex(256, 256, (g, w, h) => { const r = rnd(6); g.fillStyle = "#3e3a36"; g.fillRect(0, 0, w, h); for(let i=0;i<3000;i++){ g.fillStyle = r() > .5 ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.08)"; g.fillRect(r()*w, r()*h, 2, 2); } }, [1, 1]);
+  const fieldTex = canvasTex(1024, 1024, (g, w, h) => {
+    const r = rnd(8); g.fillStyle = "#5a6a3a"; g.fillRect(0, 0, w, h);
+    for(let i=0;i<220;i++){ const x = r()*w, y = r()*h, fw = 30 + r()*90, fh = 20 + r()*70; g.fillStyle = ["#6a7a42", "#7a7a48", "#4e6234", "#8a8450", "#5c6e3a"][Math.floor(r()*5)]; g.fillRect(x, y, fw, fh); }
+    g.strokeStyle = "rgba(60,80,90,.6)"; g.lineWidth = 3; for(let i=0;i<12;i++){ g.beginPath(); let x = r()*w, y = 0; g.moveTo(x, y); while(y < h){ x += (r() - .5)*60; y += 40; g.lineTo(x, y); } g.stroke(); }
+  }, [1, 1]);
+  function groundPlane(w, d, x, z, mat, y = QUAY){ const m = new Mesh(new PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI/2; m.position.set(x, y, z); m.receiveShadow = true; scene.add(m); return m; }
+  const tx = (t, rx, ry) => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(rx, ry); return c; };
+  // west bank: promenade, road, building land
+  groundPlane(15, 24000, WEST - 7.5, 0, new MeshStandardMaterial({map:tx(paveTex, 5, 8000), roughness:.85}));
+  groundPlane(32, 24000, WEST - 31, 0, new MeshStandardMaterial({map:tx(roadTex, 8, 6000), roughness:.9}));
+  groundPlane(12000, 24000, WEST - 47 - 6000, 0, new MeshStandardMaterial({map:tx(paveTex, 1200, 2400), roughness:.9}));
+  // east bank (fields until the 1990s)
+  const eastMat = new MeshStandardMaterial({map:tx(fieldTex, 12, 24), roughness:.95});
+  groundPlane(12000, 24000, EAST + 6000, 0, eastMat);
+  // quay walls
+  const quayMat = std("quay", {color:0x6a6258, roughness:.9});
+  [WEST, EAST].forEach((x, i) => { const m = mesh(new BoxGeometry(2, QUAY + 2, 24000), quayMat, x + (i ? 1 : -1), (QUAY - 2)/2, 0, false); scene.add(m); });
+  // river bed (seen through the water at shallow angles)
+  const bed = new Mesh(new PlaneGeometry(RIVER_W + 40, 24000), std("bed", {color:0x1a2018})); bed.rotation.x = -Math.PI/2; bed.position.y = -6; scene.add(bed);
+  // Suzhou Creek at the north end of the Bund
+  const creek = new Mesh(new PlaneGeometry(1500, 34), std("creek", {color:0x26302a, roughness:.15, metalness:.3})); creek.rotation.x = -Math.PI/2; creek.position.set(WEST - 750, QUAY + .05, -365); scene.add(creek);
+  // tram rails (1908 – 1975)
+  const rails = new Group(); [-1, 1].forEach(s => [-.72, .72].forEach(o => rails.add(mesh(new BoxGeometry(.12, .06, 6000), std("rail", {color:0x8a8f94, metalness:.8, roughness:.35}), WEST - 31 + s*4 + o, QUAY + .03, 0, false)))); scene.add(rails);
+  addTimed(rails, 1908, 1975, "grow");
+  // embankment railing (simple balustrade along the river)
+  const rail = new Group();
+  rail.add(mesh(new BoxGeometry(.5, .25, 6000), std("balTop", {color:0xb8b0a0}), WEST + .3, QUAY + 1.05, 0, false));
+  const posts = new InstancedMesh(new BoxGeometry(.3, 1, .3), std("balPost", {color:0xa8a090}), 400);
+  { const m4 = new Matrix4(); for(let i=0;i<400;i++){ m4.makeTranslation(WEST + .3, QUAY + .5, -1000 + i*5); posts.setMatrixAt(i, m4); } }
+  rail.add(posts); scene.add(rail);
+  addTimed(rail, 1868, 9999, "grow");
+
+  /* =====================================================================
+     BUILDINGS OF THE BUND (positions north → south)
+     ===================================================================== */
+  setLoad(.46, "Raising the Bund…"); await nextFrame();
+  const buildings = new Group(); scene.add(buildings);
+  const copper = std("copper", {color:0x5f8a78, roughness:.55, metalness:.35});
+  const roofTile = std("roofTile", {color:0x7a3a2a, roughness:.85});
+  const darkTile = std("darkTile", {color:0x2e3236, roughness:.75});
+  const granite = "#b9b0a0", limestone = "#cfc6b2", brickRed = "#8a3a2a";
+
+  /* a block whose front (+x) faces the river */
+  function block(o){
+    const g = new Group(); g.position.set(o.x ?? FRONT - o.d/2, QUAY, o.z);
+    const fm = o.mat || facade(o.f);
+    const side = o.sideMat || fm;
+    const top = o.topMat || std("flatRoof", {color:0x55504a});
+    const b = new Mesh(new BoxGeometry(o.d, o.h, o.w), [fm, side, top, top, side, side]);
+    b.position.y = o.h/2; b.castShadow = b.receiveShadow = true; g.add(b);
+    buildings.add(g);
+    return g;
+  }
+  function gableRoof(len, span, h, mat){ const sh = new Shape(); sh.moveTo(-span/2, 0); sh.lineTo(span/2, 0); sh.lineTo(0, h); sh.closePath(); const geo = new ExtrudeGeometry(sh, {depth:len, bevelEnabled:false}); geo.translate(0, 0, -len/2); const m = new Mesh(geo, mat); m.castShadow = m.receiveShadow = true; return m; }
+  function hipRoof(w, d, h, mat){ const g = new Group(); const c = new Mesh(new ConeGeometry(Math.SQRT1_2, 1, 4, 1), mat); c.rotation.y = Math.PI/4; c.scale.set(d, h, w); c.position.y = h/2; c.castShadow = true; g.add(c); return g; }
+  function clockFace(){
+    return canvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = "#e8e2d0"; g.beginPath(); g.arc(128, 128, 120, 0, Math.PI*2); g.fill();
+      g.strokeStyle = "#1a1a1a"; g.lineWidth = 8; g.stroke();
+      g.fillStyle = "#1a1a1a"; for(let i=0;i<12;i++){ const a = i/12*Math.PI*2; g.fillRect(128 + Math.sin(a)*96 - 4, 128 - Math.cos(a)*96 - 10, 8, 20); }
+      g.lineWidth = 10; g.lineCap = "round"; g.beginPath(); g.moveTo(128, 128); g.lineTo(128 + 50, 128 - 30); g.stroke(); g.lineWidth = 6; g.beginPath(); g.moveTo(128, 128); g.lineTo(128 - 10, 128 - 90); g.stroke();
+    });
+  }
+
+  /* ---- early verandah houses (1850s – replaced in the 1900s–1920s) ---- */
+  function verandah(z, w, from, to, seed){
+    const g = block({z, w, d:30, h:13, f:{w, h:13, floors:2, bays:Math.max(4, Math.round(w/5)), stone:"#e6dfcf", style:"verandah", seed, lit:.4, cornice:false}});
+    const roof = hipRoof(w + 2, 32, 6, roofTile); roof.position.y = 13; g.add(roof);
+    addTimed(g, from, to);
+  }
+  const plots = [
+    {z:-225, w:46, from:1851, to:1920, seed:11},
+    {z:-185, w:40, from:1855, to:1934, seed:12},
+    {z:-150, w:42, from:1858, to:1926, seed:13},
+    {z:-115, w:36, from:1856, to:1906, seed:14},
+    {z:-85,  w:28, from:1862, to:1922, seed:15},
+    {z:-5,   w:52, from:1857, to:1920, seed:16},
+    {z:40,   w:34, from:1860, to:1925, seed:17},
+    {z:80,   w:30, from:1864, to:1924, seed:18},
+    {z:120,  w:34, from:1866, to:1909, seed:19},
+    {z:160,  w:38, from:1849, to:1913, seed:20},
+    {z:-270, w:40, from:1873, to:9999, seed:21, consulate:true}
+  ];
+  plots.forEach(p => {
+    if(p.consulate){
+      const g = block({z:p.z, x:FRONT - 40, w:p.w, d:24, h:12, f:{w:p.w, h:12, floors:2, bays:8, stone:"#e2d8c4", style:"verandah", seed:p.seed, lit:.3, cornice:false}});
+      const roof = hipRoof(p.w + 2, 26, 5, roofTile); roof.position.y = 12; g.add(roof);
+      addTimed(g, p.from, p.to);
+    } else verandah(p.z, p.w, p.from, p.to, p.seed);
+  });
+
+  /* ---- Customs Houses: 1857 Chinese-style office, 1893 Tudor, 1927 clock tower ---- */
+  {
+    const g = new Group(); g.position.set(FRONT - 15, QUAY, -50); buildings.add(g);
+    g.add(mesh(new BoxGeometry(22, 7, 34), std("yamenWall", {color:0xb8a88a}), 0, 3.5, 0));
+    const r = hipRoof(36, 26, 5, darkTile); r.position.y = 7; g.add(r);
+    const gate = new Group(); gate.position.set(14, 0, 0); g.add(gate);
+    [-6, 6].forEach(z => gate.add(mesh(new CylinderGeometry(.5, .5, 7, 10), std("lacq", {color:0x8e1b16, roughness:.4}), 0, 3.5, z)));
+    const gr = hipRoof(15, 3, 1.6, darkTile); gr.position.y = 7; gate.add(gr);
+    addTimed(g, 1846, 1891);
+  }
+  {
+    const g = block({z:-50, w:40, d:30, h:18, f:{w:40, h:18, floors:3, bays:8, stone:brickRed, style:"brick", band:"#e8dcc4", seed:31, lit:.45}});
+    const t = mesh(new BoxGeometry(8, 22, 8), facade({w:8, h:22, floors:5, bays:2, stone:brickRed, style:"brick", band:"#e8dcc4", seed:32, lit:.3}), 2, 29, 0); g.add(t);
+    const cf = new MeshStandardMaterial({map:clockFace(), roughness:.6}); const c = mesh(new PlaneGeometry(5, 5), cf, 6.05, 34, 0, false); c.rotation.y = Math.PI/2; g.add(c);
+    const sp = hipRoof(8, 8, 7, darkTile); sp.position.set(2, 40, 0); g.add(sp);
+    addTimed(g, 1893, 1925);
+  }
+  {
+    const g = block({z:-50, w:55, d:50, h:32, f:{w:55, h:32, floors:7, bays:9, stone:granite, rustic:2, columns:[2, 5], seed:41, lit:.6}});
+    const tower = mesh(new BoxGeometry(16, 34, 16), facade({w:16, h:34, floors:7, bays:3, stone:granite, seed:42, piers:true, lit:.4}), 17, 32 + 17, 0); g.add(tower);
+    const cf = new MeshStandardMaterial({map:clockFace(), emissiveMap:clockFace(), emissive:0xffffff, emissiveIntensity:0, roughness:.6}); nightMats.push({m:cf, k:.8});
+    [[25.05, 0, Math.PI/2], [17, 8.05, 0], [17, -8.05, Math.PI]].forEach(([x, z, ry]) => { const c = mesh(new PlaneGeometry(9, 9), cf, x, 59, z, false); c.rotation.y = ry; g.add(c); });
+    g.add(mesh(new BoxGeometry(12, 6, 12), stoneMat(granite, "g1"), 17, 69, 0));
+    g.add(mesh(new BoxGeometry(8, 5, 8), stoneMat(granite, "g1"), 17, 74.5, 0));
+    const tip = hipRoof(6, 6, 4, copper); tip.position.set(17, 77, 0); g.add(tip);
+    for(let i=0;i<4;i++) g.add(mesh(new CylinderGeometry(.9, .9, 12, 12), stoneMat("#d8d0c0", "col"), 25.6, 6, -6 + i*4));
+    g.add(mesh(new BoxGeometry(2.4, 2.2, 18), stoneMat("#d8d0c0", "col"), 25.6, 13, 0));
+    addTimed(g, 1927, 9999);
+  }
+
+  /* ---- HSBC Building 1923 (dome) ---- */
+  {
+    const g = block({z:-5, w:90, d:60, h:34, f:{w:90, h:34, floors:6, bays:15, stone:limestone, rustic:2, columns:[2, 4], attic:true, seed:51, lit:.6}});
+    g.add(mesh(new CylinderGeometry(10, 10.5, 7, 32), stoneMat(limestone, "l1"), 0, 37.5, 0));
+    const dome = mesh(new SphereGeometry(10, 32, 16, 0, Math.PI*2, 0, Math.PI/2), copper, 0, 41, 0); dome.scale.y = .85; g.add(dome);
+    g.add(mesh(new CylinderGeometry(1.4, 1.8, 3, 12), copper, 0, 50.5, 0));
+    for(let i=0;i<6;i++) g.add(mesh(new CylinderGeometry(1, 1, 14, 14), stoneMat("#e0d8c8", "col2"), 30.8, 7, -12.5 + i*5));
+    g.add(mesh(new BoxGeometry(2.6, 2.4, 30), stoneMat("#e0d8c8", "col2"), 30.8, 15, 0));
+    addTimed(g, 1923, 9999);
+  }
+  /* ---- Cathay Hotel / Sassoon House 1929 (green pyramid) ---- */
+  {
+    const g = block({z:-150, w:45, d:60, h:40, f:{w:45, h:40, floors:10, bays:8, stone:"#c4b8a2", piers:true, seed:61, lit:.7, cornice:false}});
+    const t = mesh(new BoxGeometry(18, 24, 18), facade({w:18, h:24, floors:6, bays:3, stone:"#c4b8a2", piers:true, seed:62, lit:.5, cornice:false}), 21, 52, 0); g.add(t);
+    const p = new Mesh(new ConeGeometry(12.7, 13, 4, 1), std("cathayRoof", {color:0x3e7a5c, roughness:.45, metalness:.3})); p.rotation.y = Math.PI/4; p.position.set(21, 70.5, 0); p.castShadow = true; g.add(p);
+    addTimed(g, 1929, 9999);
+  }
+  /* ---- Palace Hotel 1909 (red brick + white bands) ---- */
+  {
+    const g = block({z:-115, w:36, d:40, h:26, f:{w:36, h:26, floors:6, bays:7, stone:"#9a4a32", style:"brick", band:"#ece4d4", seed:71, lit:.6}});
+    const tw = mesh(new CylinderGeometry(3.4, 3.4, 8, 12), stoneMat("#ece4d4", "w1"), 18, 30, 15); g.add(tw);
+    const dm = mesh(new SphereGeometry(3.6, 16, 10, 0, Math.PI*2, 0, Math.PI/2), copper, 18, 34, 15); g.add(dm);
+    addTimed(g, 1909, 9999);
+  }
+  /* ---- Jardine Matheson 1922 ---- */
+  { const g = block({z:-225, w:46, d:44, h:30, f:{w:46, h:30, floors:6, bays:9, stone:granite, rustic:2, columns:[2, 4], seed:81, lit:.55}}); addTimed(g, 1922, 9999); }
+  /* ---- North China Daily News 1924 ---- */
+  {
+    const g = block({z:-85, w:28, d:36, h:34, f:{w:28, h:34, floors:8, bays:5, stone:"#c8bea8", columns:[5, 7], seed:91, lit:.55}});
+    [-10, 10].forEach(z => { g.add(mesh(new BoxGeometry(5, 6, 5), stoneMat("#c8bea8", "nc"), 16, 37, z)); const c = hipRoof(5, 5, 3, copper); c.position.set(16, 40, z); g.add(c); });
+    addTimed(g, 1924, 9999);
+  }
+  /* ---- generic 1920s banks ---- */
+  { const g = block({z:40, w:34, d:40, h:28, f:{w:34, h:28, floors:6, bays:7, stone:"#d0c6b0", rustic:2, columns:[2, 4], seed:101, lit:.55}}); addTimed(g, 1925, 9999); }
+  { const g = block({z:80, w:30, d:36, h:24, f:{w:30, h:24, floors:5, bays:6, stone:"#bfb39c", rustic:1, seed:111, lit:.5}}); addTimed(g, 1924, 9999); }
+  /* ---- Shanghai Club 1910 ---- */
+  {
+    const g = block({z:120, w:34, d:42, h:26, f:{w:34, h:26, floors:5, bays:7, stone:"#e2dac8", rustic:2, columns:[2, 3], seed:121, lit:.6}});
+    [-12, 12].forEach(z => { g.add(mesh(new CylinderGeometry(2.6, 2.6, 5, 14), stoneMat("#e2dac8", "sc"), 18, 28.5, z)); g.add(mesh(new SphereGeometry(2.8, 14, 8, 0, Math.PI*2, 0, Math.PI/2), copper, 18, 31, z)); });
+    addTimed(g, 1910, 9999);
+  }
+  /* ---- Asia Building 1916 ---- */
+  { const g = block({z:160, w:38, d:40, h:32, f:{w:38, h:32, floors:7, bays:8, stone:"#d8ceb8", rustic:2, columns:[2, 5], seed:131, lit:.5}}); addTimed(g, 1916, 9999); }
+  /* ---- Bank of China 1937 (Art Deco with Chinese roof) ---- */
+  {
+    const g = block({z:-185, w:40, d:46, h:30, f:{w:40, h:30, floors:7, bays:8, stone:"#b8ae98", piers:true, seed:141, lit:.5, cornice:false}});
+    const t = mesh(new BoxGeometry(26, 34, 26), facade({w:26, h:34, floors:9, bays:5, stone:"#b8ae98", piers:true, seed:142, lit:.5, cornice:false}), 4, 47, 0); g.add(t);
+    const r = hipRoof(30, 30, 5, std("bocRoof", {color:0x2f5a5a, roughness:.5, metalness:.2})); r.position.set(4, 64, 0); g.add(r);
+    addTimed(g, 1937, 9999);
+  }
+  /* ---- Broadway Mansions 1934 (north of Suzhou Creek) ---- */
+  {
+    const bm = (w, h, s) => facade({w, h, floors:Math.round(h/3.2), bays:Math.round(w/5), stone:"#7a4a3a", style:"brick", band:"#6a3a2a", seed:s, lit:.6, cornice:false});
+    const g = block({z:-430, x:FRONT - 30, w:60, d:44, h:42, mat:bm(60, 42, 151)});
+    g.add(mesh(new BoxGeometry(32, 22, 46), bm(46, 22, 152), -4, 53, 0));
+    g.add(mesh(new BoxGeometry(22, 14, 30), bm(30, 14, 153), -6, 71, 0));
+    addTimed(g, 1934, 9999);
+  }
+  /* ---- background city blocks behind the Bund (grow over time) ---- */
+  {
+    const r = rnd(77);
+    for(let i=0;i<46;i++){
+      const z = -420 + r()*700, x = FRONT - 90 - r()*500, w = 20 + r()*40, d = 20 + r()*40;
+      const early = r() < .5;
+      const h = early ? 8 + r()*6 : 14 + r()*26;
+      const g = block({z, x, w, d, h, f:{w, h, floors:Math.max(2, Math.round(h/3.6)), bays:Math.max(3, Math.round(w/6)), stone:["#a89e8c", "#8e8270", "#b4a892", "#9a6a52"][Math.floor(r()*4)], seed:200 + i, lit:.45, style:r() < .3 ? "brick" : undefined, band:"#7a6a5a"}});
+      addTimed(g, early ? 1855 + Math.floor(r()*40) : 1905 + Math.floor(r()*30), 9999);
+    }
+  }
+  /* ---- Gutzlaff signal tower 1907 ---- */
+  {
+    const g = new Group(); g.position.set(WEST - 5, QUAY, 205); scene.add(g);
+    g.add(mesh(new CylinderGeometry(2.2, 2.8, 36, 18), stoneMat("#b8b0a0", "sig"), 0, 18, 0));
+    g.add(mesh(new CylinderGeometry(.25, .25, 16, 8), std("mast", {color:0x3a3028}), 0, 44, 0));
+    g.add(mesh(new BoxGeometry(8, .3, .3), std("mast"), 0, 48, 0));
+    g.add(mesh(new SphereGeometry(1, 12, 8), std("signalBall", {color:0x9a2a1a}), 0, 50, 0));
+    addTimed(g, 1907, 9999);
+  }
+  /* ---- Public Garden 1868 ---- */
+  {
+    const g = new Group(); scene.add(g);
+    const lawn = new Mesh(new PlaneGeometry(38, 60), std("lawn", {color:0x4e6a34, roughness:.95})); lawn.rotation.x = -Math.PI/2; lawn.position.set(WEST - 22, QUAY + .05, -320); lawn.receiveShadow = true; g.add(lawn);
+    const tr = rnd(12);
+    for(let i=0;i<22;i++){ const x = WEST - 6 - tr()*34, z = -348 + tr()*56; g.add(mesh(new CylinderGeometry(.3, .45, 4, 6), std("trunk", {color:0x4a3a2a}), x, QUAY + 2, z)); const c = mesh(new SphereGeometry(3 + tr()*1.5, 10, 8), std("leaf", {color:0x3e5a2a, roughness:.9}), x, QUAY + 6, z); c.scale.y = .85; g.add(c); }
+    const pav = new Group(); pav.position.set(WEST - 20, QUAY, -320); g.add(pav);
+    for(let i=0;i<6;i++){ const a = i/6*Math.PI*2; pav.add(mesh(new CylinderGeometry(.2, .2, 4, 8), std("white", {color:0xe8e4da}), Math.cos(a)*3, 2, Math.sin(a)*3)); }
+    const pr = new Mesh(new ConeGeometry(4, 2.5, 6), std("pavRoof", {color:0x5a6a6a})); pr.position.y = 5.2; pav.add(pr);
+    addTimed(g, 1868, 9999, "grow");
+  }
+  /* ---- Garden Bridge 1907 over Suzhou Creek ---- */
+  {
+    const g = new Group(); g.position.set(WEST - 20, QUAY, -365); scene.add(g);
+    const steel = std("bridgeSteel", {color:0x4a4f50, metalness:.6, roughness:.5});
+    g.add(mesh(new BoxGeometry(18, .8, 40), steel, 0, .6, 0));
+    [-8.5, 8.5].forEach(x => { [-1, 1].forEach(s => { const curve = new THREE.QuadraticBezierCurve3(new Vector3(x, 1, s*20), new Vector3(x, 9, s*10), new Vector3(x, 6, 0)); g.add(mesh(new THREE.TubeGeometry(curve, 12, .35, 6), steel)); }); for(let i=-3;i<=3;i++) g.add(mesh(new BoxGeometry(.3, 5, .3), steel, x, 3.4, i*5.5)); });
+    addTimed(g, 1907, 9999);
+  }
+  /* ---- the walled Chinese city to the south (wall until 1912) ---- */
+  {
+    const r = rnd(33);
+    const n = 420;
+    const houses = new InstancedMesh(new BoxGeometry(1, 1, 1), std("cityHouse", {color:0xa8a090, roughness:.95}), n);
+    const roofs = new InstancedMesh((() => { const gg = new ConeGeometry(Math.SQRT1_2, 1, 4, 1); gg.rotateY(Math.PI/4); return gg; })(), darkTile, n);
+    const m4 = new Matrix4(), q = new Quaternion(), s = new Vector3(), p = new Vector3();
+    for(let i=0;i<n;i++){
+      const a = r()*Math.PI*2, d = Math.sqrt(r())*380;
+      const x = FRONT - 420 + Math.cos(a)*d*.9, z = 760 + Math.sin(a)*d;
+      const w = 6 + r()*8, dd = 6 + r()*8, h = 4 + r()*3;
+      q.identity(); p.set(x, QUAY + h/2, z); s.set(dd, h, w); m4.compose(p, q, s); houses.setMatrixAt(i, m4);
+      p.set(x, QUAY + h + 1.4, z); s.set(dd*1.15, 2.8, w*1.15); m4.compose(p, q, s); roofs.setMatrixAt(i, m4);
+    }
+    houses.castShadow = roofs.castShadow = true; houses.receiveShadow = true;
+    const city = new Group(); city.add(houses); city.add(roofs); scene.add(city);
+    addTimed(city, 1839, 1990, "grow");
+    const wallG = new Group(); scene.add(wallG);
+    const wm = std("cityWall", {color:0x6a6a62, roughness:.95});
+    for(let i=0;i<40;i++){ const a0 = i/40*Math.PI*2, a1 = (i + 1)/40*Math.PI*2; const x0 = FRONT - 420 + Math.cos(a0)*400*.9, z0 = 760 + Math.sin(a0)*400, x1 = FRONT - 420 + Math.cos(a1)*400*.9, z1 = 760 + Math.sin(a1)*400; const len = Math.hypot(x1 - x0, z1 - z0); const seg = mesh(new BoxGeometry(len + .5, 8, 5), wm, (x0 + x1)/2, QUAY + 4, (z0 + z1)/2); seg.rotation.y = -Math.atan2(z1 - z0, x1 - x0); wallG.add(seg); }
+    addTimed(wallG, 1839, 1912);
+  }
+  /* ---- plane trees and street lamps along the Bund ---- */
+  const lampHeads = [];
+  {
+    const r = rnd(41);
+    const trees = new Group(); scene.add(trees);
+    const tn = 70, trunks = new InstancedMesh(new CylinderGeometry(.25, .35, 5, 6), std("trunk"), tn), crowns = new InstancedMesh(new SphereGeometry(3, 10, 8), std("leaf"), tn);
+    const m4 = new Matrix4(), q = new Quaternion(), s = new Vector3(), p = new Vector3();
+    for(let i=0;i<tn;i++){ const side = i % 2 ? WEST - 14 : FRONT + 2; const z = -340 + Math.floor(i/2)*20 + r()*3; m4.makeTranslation(side, QUAY + 2.5, z); trunks.setMatrixAt(i, m4); const sc = .8 + r()*.5; p.set(side, QUAY + 6.5, z); s.set(sc, sc*.9, sc); m4.compose(p, q, s); crowns.setMatrixAt(i, m4); }
+    trunks.castShadow = crowns.castShadow = true; trees.add(trunks); trees.add(crowns);
+    addTimed(trees, 1880, 9999, "grow");
+    const lamps = new Group(); scene.add(lamps);
+    const ln = 36, poles = new InstancedMesh(new CylinderGeometry(.08, .12, 5, 6), std("lampPole", {color:0x1e2224, metalness:.6, roughness:.4}), ln);
+    const headMat = new MeshStandardMaterial({color:0xfff2d0, emissive:0xffc070, emissiveIntensity:0}); nightMats.push({m:headMat, k:3});
+    const heads = new InstancedMesh(new SphereGeometry(.35, 10, 8), headMat, ln);
+    for(let i=0;i<ln;i++){ const z = -340 + i*20; m4.makeTranslation(WEST - 3, QUAY + 2.5, z); poles.setMatrixAt(i, m4); m4.makeTranslation(WEST - 3, QUAY + 5.1, z); heads.setMatrixAt(i, m4); const gs = new Sprite(new SpriteMaterial({map:glowTex, color:0xffc070, transparent:true, opacity:0, depthWrite:false, blending:AdditiveBlending})); gs.position.set(WEST - 3, QUAY + 5.1, z); gs.scale.set(4, 4, 1); lamps.add(gs); lampHeads.push(gs); }
+    lamps.add(poles); lamps.add(heads);
+    addTimed(lamps, 1865, 9999, "grow");
+  }
+
+  /* =====================================================================
+     PUDONG (east bank): villages, godowns, wharves, cranes, factories
+     ===================================================================== */
+  setLoad(.56, "Building Pudong…"); await nextFrame();
+  const smokes = [];
+  function smokeColumn(parent, x, y, z, scale=1, color=0x8a8278){
+    const puffs = [];
+    for(let i=0;i<7;i++){ const s = new Sprite(new SpriteMaterial({map:smokeTex, color, transparent:true, opacity:.5, depthWrite:false})); parent.add(s); puffs.push(s); }
+    const rec = {puffs, x, y, z, scale, phase:Math.random()}; smokes.push(rec); return rec;
+  }
+  {
+    const r = rnd(55);
+    const village = new Group(); scene.add(village);
+    const n = 160;
+    const vh = new InstancedMesh(new BoxGeometry(1, 1, 1), std("villageHouse", {color:0xb0a690, roughness:.95}), n);
+    const vr = new InstancedMesh((() => { const gg = new ConeGeometry(Math.SQRT1_2, 1, 4, 1); gg.rotateY(Math.PI/4); return gg; })(), darkTile, n);
+    const m4 = new Matrix4(), q = new Quaternion(), s = new Vector3(), p = new Vector3();
+    for(let i=0;i<n;i++){ const cl = Math.floor(r()*8); const cx = EAST + 200 + (cl % 4)*260 + r()*80, cz = -700 + Math.floor(cl/4)*700 + r()*240; const w = 6 + r()*6, d = 6 + r()*6, h = 3.5 + r()*2; p.set(cx, QUAY + h/2, cz); s.set(d, h, w); m4.compose(p, q, s); vh.setMatrixAt(i, m4); p.y = QUAY + h + 1.2; s.set(d*1.15, 2.4, w*1.15); m4.compose(p, q, s); vr.setMatrixAt(i, m4); }
+    vh.castShadow = vr.castShadow = true; village.add(vh); village.add(vr);
+    addTimed(village, 1839, 1995, "grow");
+    // godowns (warehouses) along the river
+    const godownTex = facade({w:60, h:9, floors:2, bays:10, stone:"#7a5a44", style:"brick", band:"#6a4a38", seed:301, lit:.15, cornice:false});
+    for(let i=0;i<9;i++){
+      const z = -520 + i*120 + r()*20, w = 50 + r()*30;
+      const g = new Group(); g.position.set(EAST + 30, QUAY, z); scene.add(g);
+      const b = new Mesh(new BoxGeometry(24, 9, w), [godownTex, godownTex, std("godownRoof", {color:0x4a4440}), std("godownRoof"), godownTex, godownTex]); b.position.y = 4.5; b.castShadow = b.receiveShadow = true; g.add(b);
+      const rf = gableRoof(w + 2, 26, 4, std("godownRoof")); rf.position.y = 9; g.add(rf);
+      addTimed(g, i < 4 ? 1862 + i*6 : 1898 + i*3, 1992);
+      // wharf
+      const wh = mesh(new BoxGeometry(14, 1, w*.6), std("wharf", {color:0x4a3e32}), EAST - 7, QUAY - .5, z); scene.add(wh);
+      addTimed(wh, 1870 + i*3, 1992, "scale");
+    }
+    // cranes and factories (1900s – )
+    for(let i=0;i<7;i++){
+      const z = -460 + i*130;
+      const c = new Group(); c.position.set(EAST + 12, QUAY, z + 30); scene.add(c);
+      const cm = std("crane", {color:0x3a3a36, metalness:.5, roughness:.6});
+      [-2, 2].forEach(x => [-2, 2].forEach(zz => c.add(mesh(new BoxGeometry(.5, 22, .5), cm, x, 11, zz))));
+      const jib = mesh(new BoxGeometry(30, 1.2, 1.2), cm, -10, 22, 0); jib.rotation.z = .12; c.add(jib);
+      addTimed(c, 1903 + i*3, 1995);
+    }
+    for(let i=0;i<6;i++){
+      const z = -600 + i*230 + r()*50, x = EAST + 120 + r()*200;
+      const f = new Group(); f.position.set(x, QUAY, z); scene.add(f);
+      const ft = facade({w:60, h:14, floors:3, bays:12, stone:"#8a6a50", style:"brick", band:"#7a5a40", seed:400 + i, lit:.5, cornice:false});
+      const b = new Mesh(new BoxGeometry(40, 14, 60), [ft, ft, std("factRoof", {color:0x3e3a36}), std("factRoof"), ft, ft]); b.position.y = 7; b.castShadow = b.receiveShadow = true; f.add(b);
+      for(let k=0;k<4;k++){ const s = gableRoof(60, 10, 4, std("factRoof")); s.position.set(-15 + k*10, 14, 0); f.add(s); }
+      const ch = mesh(new CylinderGeometry(1.4, 2.2, 38, 12), std("chimney", {color:0x6a4232}), 14, 19, 22); f.add(ch);
+      smokeColumn(f, 14, 40, 22, 1.3, 0x7a746e);
+      addTimed(f, 1905 + i*4, 1992);
+    }
+  }
+
+  /* =====================================================================
+     SHIPS
+     ===================================================================== */
+  setLoad(.66, "Launching the ships…"); await nextFrame();
+  const ships = [];
+  const sailTex = (col) => canvasTex(64, 128, (g, w, h) => { g.fillStyle = col; g.fillRect(0, 0, w, h); g.strokeStyle = "rgba(0,0,0,.35)"; g.lineWidth = 3; for(let y=10;y<h;y+=16){ g.beginPath(); g.moveTo(0, y); g.lineTo(w, y + 4); g.stroke(); } });
+  const junkSail = new MeshStandardMaterial({map:sailTex("#9a5a32"), side:DoubleSide, roughness:.95});
+  const junkSail2 = new MeshStandardMaterial({map:sailTex("#c08a52"), side:DoubleSide, roughness:.95});
+  function hullGeo(len, beam, depth, bowLift=.3){
+    const s = new Shape(); s.moveTo(-len/2, depth); s.lineTo(-len/2 + .4, 0); s.lineTo(len/2 - len*.15, 0); s.quadraticCurveTo(len/2, depth*.2, len/2 + .2, depth*(1 + bowLift)); s.lineTo(-len/2, depth);
+    const g = new ExtrudeGeometry(s, {depth:beam, bevelEnabled:false}); g.translate(0, 0, -beam/2); return g;
+  }
+  function junk(size, sailMat){
+    const g = new Group();
+    g.add(mesh(hullGeo(16*size, 4.6*size, 2.6*size, .5), std("junkHull", {color:0x4a3220, roughness:.9}), 0, -1, 0));
+    g.add(mesh(new BoxGeometry(4*size, 2*size, 4.4*size), std("junkHull"), -6*size, 2*size, 0));
+    [[-2, 13], [3, 10], [-6.5, 7]].forEach(([x, hh]) => {
+      g.add(mesh(new CylinderGeometry(.15*size, .2*size, hh*size, 6), std("mast", {color:0x3a3028}), x*size, hh*size/2, 0));
+      const sl = mesh(new PlaneGeometry(5.5*size, hh*.75*size), sailMat, x*size + .5*size, hh*size*.55, 0, true); sl.rotation.y = .3; g.add(sl);
+    });
+    return g;
+  }
+  function sampan(){ const g = new Group(); g.add(mesh(hullGeo(7, 1.8, 1, .4), std("sampan", {color:0x5a4430}), 0, -.4, 0)); const roof = mesh(new CylinderGeometry(1, 1, 2.5, 10, 1, true, 0, Math.PI), std("mat", {color:0x8a7a5a, side:DoubleSide}), -.5, .6, 0); roof.rotation.z = Math.PI/2; roof.rotation.y = Math.PI/2; g.add(roof); return g; }
+  function clipper(){
+    const g = new Group(); const hull = std("clipperHull", {color:0x1e1c1a});
+    g.add(mesh(hullGeo(52, 9, 6, .25), hull, 0, -3, 0));
+    g.add(mesh(new BoxGeometry(50, .4, 8.6), std("deckWood", {color:0x8a6a4a}), -1, 3, 0));
+    const sail = std("canvasSail", {color:0xe8e0cc, side:DoubleSide, roughness:.95});
+    [[-14, 34], [2, 38], [17, 32]].forEach(([x, hh]) => {
+      g.add(mesh(new CylinderGeometry(.35, .5, hh, 8), std("mast"), x, 3 + hh/2, 0));
+      [0.35, .6, .82].forEach((k, j) => { const sw = (16 - j*4); g.add(mesh(new BoxGeometry(.3, .3, sw), std("mast"), x, 3 + hh*k, 0)); const s = mesh(new PlaneGeometry(sw*.95, hh*.2), sail, x + .3, 3 + hh*k - hh*.1, 0); s.rotation.y = Math.PI/2; g.add(s); });
+    });
+    return g;
+  }
+  function paddleSteamer(){
+    const g = new Group();
+    g.add(mesh(hullGeo(46, 9, 5, .15), std("psHull", {color:0x1a1a1a}), 0, -2.5, 0));
+    g.add(mesh(new BoxGeometry(28, 3.5, 8), std("white"), -2, 4.2, 0));
+    g.add(mesh(new CylinderGeometry(5, 5, 11, 20, 1, false, 0, Math.PI), std("psBox", {color:0x2a2a2a}), 0, 2.5, 0)).children.at(-1).rotation.x = Math.PI/2;
+    g.add(mesh(new CylinderGeometry(1.1, 1.2, 12, 12), std("funnel", {color:0x1a1a1a}), 3, 10, 0));
+    g.add(mesh(new CylinderGeometry(.2, .25, 22, 6), std("mast"), -14, 11, 0));
+    return g;
+  }
+  function steamer(color=0x2a2a2a, band=0xb03a2a){
+    const g = new Group();
+    g.add(mesh(hullGeo(70, 11, 7, .12), std("stHull" + color, {color}), 0, -3.5, 0));
+    g.add(mesh(new BoxGeometry(18, 5, 9), std("white"), -4, 5.5, 0));
+    g.add(mesh(new BoxGeometry(10, 3, 8), std("white"), -4, 9.5, 0));
+    g.add(mesh(new CylinderGeometry(1.6, 1.8, 10, 14), std("funnelB" + band, {color:band}), -2, 14, 0));
+    [-26, 24].forEach(x => g.add(mesh(new CylinderGeometry(.25, .3, 18, 6), std("mast"), x, 12, 0)));
+    return g;
+  }
+  function warship(){
+    const g = new Group(); const grey = std("navyGrey", {color:0x6a7276, roughness:.55, metalness:.3});
+    g.add(mesh(hullGeo(90, 13, 7, .1), grey, 0, -3.5, 0));
+    g.add(mesh(new BoxGeometry(22, 5, 10), grey, -4, 5.5, 0)); g.add(mesh(new BoxGeometry(8, 6, 6), grey, 2, 10, 0));
+    [-6, 4].forEach(x => g.add(mesh(new CylinderGeometry(1.8, 2, 11, 14), grey, x - 6, 13, 0)));
+    [-30, 26].forEach(x => { const t = new Group(); t.position.set(x, 4.2, 0); g.add(t); t.add(mesh(new CylinderGeometry(3, 3.4, 2.4, 14), grey)); const b = mesh(new CylinderGeometry(.35, .4, 12, 8), grey, x > 0 ? 6 : -6, .4, 0); b.rotation.z = Math.PI/2; t.add(b); });
+    g.add(mesh(new CylinderGeometry(.3, .35, 26, 6), grey, -2, 18, 0));
+    return g;
+  }
+  /* {make, from, to, lane x, z start, speed (m/s, 0 = anchored), scale} */
+  const shipPlan = [
+    ...Array.from({length:10}, (_, i) => ({make:() => junk(.8 + (i % 3)*.25, i % 2 ? junkSail : junkSail2), from:1839, to:i < 6 ? 1960 : 1937, x:-110 + (i*53 % 220), z:-900 + i*190, speed:i % 3 === 0 ? 0 : 1.5 + (i % 4)*.6, dir:i % 2 ? 1 : -1})),
+    ...Array.from({length:14}, (_, i) => ({make:sampan, from:1839, to:1980, x:-138 + (i % 2)*270 + (i*7 % 9), z:-500 + i*75, speed:i % 4 === 0 ? 1 : 0, dir:1})),
+    {make:clipper, from:1845, to:1895, x:-60, z:-260, speed:0},
+    {make:clipper, from:1850, to:1890, x:40, z:240, speed:0},
+    {make:clipper, from:1855, to:1900, x:-10, z:-1400, speed:2.2, dir:1},
+    {make:paddleSteamer, from:1850, to:1910, x:20, z:600, speed:3, dir:-1},
+    {make:paddleSteamer, from:1862, to:1905, x:-80, z:60, speed:0},
+    {make:() => steamer(0x2a2a2a, 0xb03a2a), from:1880, to:1960, x:70, z:-40, speed:0},
+    {make:() => steamer(0x3a2a22, 0x1a1a1a), from:1895, to:1955, x:-40, z:1200, speed:3.5, dir:-1},
+    {make:() => steamer(0x2a3038, 0xd8b23a), from:1905, to:1950, x:95, z:340, speed:0},
+    {make:warship, from:1862, to:1941, x:-20, z:120, speed:0},
+    {make:warship, from:1900, to:1941, x:60, z:-330, speed:0}
+  ];
+  shipPlan.forEach((p, i) => {
+    const s = p.make(); s.position.set(p.x, 0, p.z); s.rotation.y = (p.dir || 1) > 0 ? Math.PI/2 : -Math.PI/2; if(p.speed === 0) s.rotation.y += (i % 2 ? .08 : -.08);
+    scene.add(s); addTimed(s, p.from, p.to, "scale");
+    ships.push({obj:s, speed:p.speed, dir:p.dir || 1, phase:i*1.7});
+  });
+
+  /* =====================================================================
+     STREET LIFE: rickshaws, trams, cars, people
+     ===================================================================== */
+  const movers = [];
+  function figure(color){ const g = new Group(); g.add(mesh(new THREE.CapsuleGeometry(.25, 1, 4, 8), std("cloth" + color, {color, roughness:.9}), 0, .75, 0)); g.add(mesh(new SphereGeometry(.17, 10, 8), std("skin", {color:0xc89a72}), 0, 1.55, 0)); return g; }
+  function rickshaw(){ const g = new Group(); g.add(mesh(new BoxGeometry(1.2, .7, 1.1), std("rkBody", {color:0x1a1a1a}), -.3, 1.1, 0)); g.add(mesh(new CylinderGeometry(.6, .6, 1.2, 10, 1, true, 0, Math.PI), std("rkHood", {color:0x2a2a2a, side:DoubleSide}), -.6, 1.6, 0)).children.at(-1).rotation.x = Math.PI/2; [-1, 1].forEach(s => { const w = mesh(new THREE.TorusGeometry(.55, .05, 6, 16), std("iron", {color:0x111111}), -.3, .55, s*.6); g.add(w); }); const pl = figure(0x6a6a5a); pl.position.x = 1.4; g.add(pl); const ps = figure(0x2a3a5a); ps.position.set(-.3, .7, 0); ps.scale.setScalar(.85); g.add(ps); return g; }
+  function tram(){
+    const t = canvasTex(256, 64, (g, w, h) => { g.fillStyle = "#2e5a3a"; g.fillRect(0, 0, w, h); g.fillStyle = "#e8dcc0"; g.fillRect(0, 0, w, 22); for(let x=12;x<w-12;x+=26){ g.fillStyle = "#2a3238"; g.fillRect(x, 26, 18, 18); } });
+    const m = new MeshStandardMaterial({map:t, roughness:.6, emissiveMap:t, emissive:0xffffff, emissiveIntensity:0}); nightMats.push({m, k:.2});
+    const g = new Group(); const b = new Mesh(new BoxGeometry(2.4, 3, 10), [m, m, std("tramRoof", {color:0x3a3a36}), m, m, m]); b.position.y = 2; b.castShadow = true; g.add(b);
+    g.add(mesh(new BoxGeometry(.08, 2.4, .08), std("iron"), 0, 4.6, 0));
+    return g;
+  }
+  function car(color){ const g = new Group(); g.add(mesh(new BoxGeometry(1.7, .9, 4), std("car" + color, {color, metalness:.5, roughness:.35}), 0, .75, 0)); g.add(mesh(new BoxGeometry(1.5, .8, 2), std("car" + color), 0, 1.55, -.3)); [-1.3, 1.3].forEach(z => [-.85, .85].forEach(x => { const w = mesh(new CylinderGeometry(.38, .38, .25, 12), std("iron"), x, .38, z); w.rotation.z = Math.PI/2; g.add(w); })); return g; }
+  const lanes = [WEST - 26, WEST - 22, WEST - 40, WEST - 36];
+  const moverPlan = [
+    ...Array.from({length:8}, (_, i) => ({make:rickshaw, from:1874, to:1956, lane:lanes[i % 4], speed:2.2 + (i % 3)*.4, z:-300 + i*80})),
+    ...Array.from({length:3}, (_, i) => ({make:tram, from:1908, to:1975, lane:i % 2 ? WEST - 35 : WEST - 27, speed:5, z:-200 + i*230, tram:true})),
+    ...Array.from({length:6}, (_, i) => ({make:() => car([0x1a1a1a, 0x2a2a3a, 0x3a1a1a][i % 3]), from:1912 + i*3, to:1990, lane:lanes[(i + 1) % 4], speed:7 + (i % 3), z:-260 + i*95}))
+  ];
+  moverPlan.forEach((p, i) => {
+    const o = p.make(); const dir = (p.lane < WEST - 31) ? -1 : 1;
+    if(p.tram) o.position.x = p.lane < WEST - 31 ? WEST - 35 : WEST - 27;
+    o.position.set(p.tram ? o.position.x : p.lane, QUAY, p.z); o.rotation.y = dir > 0 ? 0 : Math.PI;
+    scene.add(o); addTimed(o, p.from, p.to, "scale");
+    movers.push({obj:o, dir:p.tram ? (o.position.x < WEST - 31 ? -1 : 1) : dir, speed:p.speed});
+  });
+  // pedestrians (instanced): on the promenade and pavements
+  const crowd = (() => {
+    const n = 220, r = rnd(66);
+    const geo = new THREE.CapsuleGeometry(.24, 1.05, 3, 6); geo.translate(0, .76, 0);
+    const im = new InstancedMesh(geo, new MeshStandardMaterial({roughness:.9}), n);
+    const people = [];
+    const cols = [0x2a3a5a, 0x5a4a3a, 0x1a1a1a, 0x7a6a5a, 0x3a5a6a, 0x6a3a2a, 0x8a8478, 0x2a2a2a];
+    for(let i=0;i<n;i++){
+      const zone = r();
+      const x = zone < .55 ? WEST - 2 - r()*11 : zone < .8 ? WEST - 46 - r()*3 : WEST - 15 - r()*2;
+      people.push({x, z:-360 + r()*720, v:(r() < .5 ? -1 : 1)*(.6 + r()*.8), born:1843 + Math.floor(r()*60)});
+      im.setColorAt(i, new Color(cols[Math.floor(r()*cols.length)]));
+    }
+    im.castShadow = true; im.frustumCulled = false; scene.add(im);
+    return {im, people};
+  })();
+
+  /* =====================================================================
+     CAMERA: stand on the promenade (look + walk) or fly (orbit)
+     ===================================================================== */
+  const controls = new X.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = .08; controls.maxPolarAngle = 1.48; controls.minDistance = 20; controls.maxDistance = 2200; controls.enabled = false;
+  controls.target.set(-150, 20, 0);
+  let camMode = "stand";
+  const stand = {x:WEST - 2, z:20, yaw:-Math.PI/2, pitch:.08, fov:60};
+  const keys = new Set(); const joy = {x:0, y:0, on:false};
+  const quatYP = (y, p) => new Quaternion().setFromEuler(new Euler(p, y, 0, "YXZ"));
+  let tween = null;
+  const ease = (k) => k < .5 ? 4*k*k*k : 1 - Math.pow(-2*k + 2, 3)/2;
+  function flyCam(toPos, toQuat, dur, done){
+    tween = {p0:camera.position.clone(), p1:toPos.clone(), q0:camera.quaternion.clone(), q1:toQuat.clone(), t:0, dur, done};
+  }
+  const dummy = new THREE.PerspectiveCamera();
+  const lookQuat = (from, to) => { dummy.position.copy(from); dummy.lookAt(to); return dummy.quaternion.clone(); };
+  const VIEWS = [
+    {k:"promenade", label:"Promenade", mode:"stand", x:WEST - 2, z:20, yaw:-Math.PI/2, pitch:.06},
+    {k:"facades", label:"The Bund", mode:"stand", x:WEST - 7, z:10, yaw:Math.PI/2 - .55, pitch:.16},
+    {k:"river", label:"River", mode:"fly", pos:[-40, 18, 160], target:[-205, 26, -40]},
+    {k:"pudong", label:"From Pudong", mode:"fly", pos:[EAST + 22, 14, 30], target:[-200, 28, -40]},
+    {k:"above", label:"Above", mode:"fly", pos:[420, 520, 700], target:[-90, 0, -60]}
+  ];
+  let currentView = "promenade";
+  function setView(k, instant){
+    const v = VIEWS.find(v => v.k === k); currentView = k;
+    document.querySelectorAll("#viewSeg .tbtn").forEach(b => b.classList.toggle("on", b.dataset.k === k));
+    document.body.classList.toggle("stand", v.mode === "stand");
+    if(v.mode === "stand"){
+      controls.enabled = false; camMode = "tween";
+      Object.assign(stand, {x:v.x, z:v.z, yaw:v.yaw, pitch:v.pitch});
+      const p = new Vector3(stand.x, QUAY + EYE, stand.z), q = quatYP(stand.yaw, stand.pitch);
+      if(instant){ camera.position.copy(p); camera.quaternion.copy(q); camMode = "stand"; }
+      else flyCam(p, q, 2.2, () => { camMode = "stand"; });
+    } else {
+      controls.enabled = false; camMode = "tween";
+      const p = new Vector3(...v.pos), t = new Vector3(...v.target);
+      const fin = () => { controls.target.copy(t); camera.position.copy(p); controls.update(); controls.enabled = true; camMode = "fly"; };
+      if(instant){ camera.position.copy(p); camera.lookAt(t); fin(); }
+      else flyCam(p, lookQuat(p, t), 2.6, fin);
+    }
+  }
+  // input: look by dragging in stand mode, pinch/scroll zoom (FOV)
+  const canvas = renderer.domElement;
+  const ptrs = new Map(); let pinch = 0;
+  canvas.addEventListener("pointerdown", (e) => { canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); if(ptrs.size === 2){ const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
+  canvas.addEventListener("pointermove", (e) => {
+    const p = ptrs.get(e.pointerId); if(!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+    if(camMode !== "stand") return;
+    if(ptrs.size === 1){ const k = .0032*(stand.fov/60); stand.yaw += dx*k; stand.pitch = Math.max(-.9, Math.min(1.3, stand.pitch + dy*k)); }
+    else if(ptrs.size === 2){ const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if(pinch) stand.fov = Math.max(18, Math.min(75, stand.fov*pinch/d)); pinch = d; }
+  });
+  const endPtr = (e) => { ptrs.delete(e.pointerId); if(ptrs.size < 2) pinch = 0; };
+  canvas.addEventListener("pointerup", endPtr); canvas.addEventListener("pointercancel", endPtr);
+  canvas.addEventListener("wheel", (e) => { if(camMode !== "stand") return; e.preventDefault(); stand.fov = Math.max(18, Math.min(75, stand.fov*(1 + Math.sign(e.deltaY)*.08))); }, {passive:false});
+  window.addEventListener("keydown", (e) => {
+    if(!document.body.classList.contains("running")) return;
+    if(e.key === "Escape"){ closePanel(); $("help").hidden = true; return; }
+    if(["KeyW","KeyA","KeyS","KeyD","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","ShiftLeft"].includes(e.code)){ keys.add(e.code); if(e.code.startsWith("Arrow") && e.target === document.body) e.preventDefault(); }
+  });
+  window.addEventListener("keyup", (e) => keys.delete(e.code));
+  window.addEventListener("blur", () => keys.clear());
+  {
+    const base = $("joystick"), knob = $("joyKnob"); let id = null, cx = 0, cy = 0; const R = 42;
+    const mv = (t) => { let dx = t.clientX - cx, dy = t.clientY - cy; const d = Math.hypot(dx, dy); if(d > R){ dx *= R/d; dy *= R/d; } knob.style.transform = `translate(${dx}px,${dy}px)`; joy.x = dx/R; joy.y = dy/R; };
+    base.addEventListener("touchstart", (e) => { e.preventDefault(); const t = e.changedTouches[0]; id = t.identifier; const r = base.getBoundingClientRect(); cx = r.left + r.width/2; cy = r.top + r.height/2; joy.on = true; mv(t); }, {passive:false});
+    base.addEventListener("touchmove", (e) => { e.preventDefault(); for(const t of e.changedTouches) if(t.identifier === id) mv(t); }, {passive:false});
+    const end = (e) => { for(const t of e.changedTouches) if(t.identifier === id){ id = null; joy.on = false; joy.x = joy.y = 0; knob.style.transform = ""; } };
+    base.addEventListener("touchend", end); base.addEventListener("touchcancel", end);
+  }
+  function updateStand(dt){
+    let f = 0, s = 0;
+    if(keys.has("KeyW") || keys.has("ArrowUp")) f += 1; if(keys.has("KeyS") || keys.has("ArrowDown")) f -= 1;
+    if(keys.has("KeyA") || keys.has("ArrowLeft")) s -= 1; if(keys.has("KeyD") || keys.has("ArrowRight")) s += 1;
+    if(joy.on){ f -= joy.y; s += joy.x; }
+    const sp = keys.has("ShiftLeft") ? 9 : 4.5;
+    const sy = Math.sin(stand.yaw), cy = Math.cos(stand.yaw);
+    stand.x += (-sy*f + cy*s)*sp*dt; stand.z += (-cy*f - sy*s)*sp*dt;
+    stand.x = Math.max(FRONT + 2, Math.min(WEST - .8, stand.x)); stand.z = Math.max(-340, Math.min(330, stand.z));
+    camera.position.set(stand.x, QUAY + EYE, stand.z);
+    camera.quaternion.copy(quatYP(stand.yaw, stand.pitch));
+    if(Math.abs(camera.fov - stand.fov) > .01){ camera.fov += (stand.fov - camera.fov)*Math.min(1, dt*8); camera.updateProjectionMatrix(); }
+  }
+
+  /* =====================================================================
+     UI: timeline, eras, hotspots, panel, time of day, quality, views
+     ===================================================================== */
+  const slider = $("yearSlider");
+  const YMIN = 1839, YMAX = 2025;
+  const pct = (y) => (y - YMIN)/(YMAX - YMIN)*100;
+  {
+    const ticks = $("ticks");
+    ERAS.forEach(e => { ticks.insertAdjacentHTML("beforeend", `<i style="left:${pct(e.from)}%"></i><span style="left:${pct(e.from)}%">${e.from}</span>`); });
+    ticks.insertAdjacentHTML("beforeend", `<div class="locked-zone" style="left:${pct(MAX_YEAR_NOW + 1)}%"></div>`);
+    const chips = $("chips");
+    ERAS.forEach((e, i) => {
+      const b = document.createElement("button"); b.className = "chip" + (e.locked ? " locked" : ""); b.textContent = e.title; b.title = e.locked ? e.tag + " — coming in the next build stage" : e.tag;
+      b.addEventListener("click", () => { if(e.locked){ toast(e.title + " (" + e.tag.split("· ")[1] + ") is coming in the next build stage."); return; } animateYearTo(i === 0 ? 1885 : 1930); });
+      chips.appendChild(b);
+    });
+  }
+  let yearAnim = null;
+  function animateYearTo(y){ yearAnim = {from:year, to:y, t:0}; }
+  slider.addEventListener("input", () => {
+    let v = +slider.value;
+    if(v > MAX_YEAR_NOW){ v = MAX_YEAR_NOW; slider.value = v; if(!toastShown){ toast("1937 onwards is coming in the next build stage."); toastShown = true; setTimeout(() => toastShown = false, 3000); } }
+    yearAnim = null; setYear(v);
+  });
+  let toastShown = false, toastT = 0;
+  function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2800); }
+  let eraIdx = -1;
+  function eraOf(y){ return ERAS.findIndex(e => y >= e.from && y < e.to); }
+  function setYear(y){
+    year = Math.round(y); slider.value = year; $("yearLbl").textContent = year;
+    const ei = eraOf(year);
+    if(ei !== eraIdx){
+      eraIdx = ei; const e = ERAS[ei];
+      $("eraTag").textContent = e.tag; $("eraTitle").textContent = e.title; $("eraText").textContent = e.text || "";
+      $("eraLink").textContent = "→ " + e.room + " in the museum"; $("eraLink").href = MUSEUM_URL;
+      document.querySelectorAll("#chips .chip").forEach((c, i) => c.classList.toggle("on", i === ei));
+      setEraCard(true);
+      buildHotspots();
+    }
+    // Pudong fields fade into city ground later (stage 2); haze grows with industry
+    eastMat.color.setScalar(1);
+  }
+  function setEraCard(open){ const c = $("eraCard"); c.classList.toggle("min", !open); $("eraToggle").textContent = open ? "–" : "+"; $("eraToggle").setAttribute("aria-label", open ? "Collapse" : "Expand"); }
+  $("eraToggle").addEventListener("click", () => setEraCard($("eraCard").classList.contains("min")));
+  renderer.domElement.addEventListener("pointerdown", () => setEraCard(false));
+
+  // time of day buttons
+  Object.entries(TOD).forEach(([k, T]) => {
+    const b = document.createElement("button"); b.className = "tbtn"; b.dataset.k = k; b.title = T.label; b.setAttribute("aria-label", T.label);
+    b.innerHTML = {dawn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18h18M6 18a6 6 0 0 1 12 0M12 6V3M4.9 10.1 3.5 8.7M19.1 10.1l1.4-1.4"/></svg>',
+      day:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+      sunset:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18h18M6 18a6 6 0 0 1 12 0M12 10V7M9 4l3 3 3-3"/></svg>',
+      night:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>'}[k];
+    b.addEventListener("click", () => applyTod(k));
+    $("todSeg").appendChild(b);
+  });
+  // views
+  VIEWS.forEach(v => { const b = document.createElement("button"); b.className = "tbtn"; b.dataset.k = v.k; b.textContent = v.label; b.addEventListener("click", () => setView(v.k)); $("viewSeg").appendChild(b); });
+  // quality
+  const QL = {high:"High", medium:"Medium", low:"Low"};
+  function setQuality(level){
+    quality.level = level; $("qualLbl").textContent = QL[level];
+    try { localStorage.setItem("bund-quality", level); } catch(e){}
+    renderer.setPixelRatio(dprFor()); composer.setPixelRatio(dprFor()); composer.setSize(innerWidth, innerHeight);
+    sun.shadow.mapSize.set(level === "low" ? 1024 : 2048, level === "low" ? 1024 : 2048); if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; }
+    bloom.enabled = level !== "low";
+    buildWater(); applyTod(tod);
+  }
+  $("qualBtn").addEventListener("click", () => setQuality(quality.level === "high" ? "medium" : quality.level === "medium" ? "low" : "high"));
+  $("qualLbl").textContent = QL[quality.level];
+  $("helpBtn").addEventListener("click", () => { $("help").hidden = false; });
+  $("helpClose").addEventListener("click", () => { $("help").hidden = true; });
+
+  // hotspots
+  const hsHost = $("hotspots");
+  let hsList = [], panelIdx = -1;
+  function buildHotspots(){
+    hsHost.innerHTML = ""; hsList = [];
+    HOTSPOTS.forEach((h, i) => {
+      if(h.era !== eraIdx) return;
+      const n = hsList.length + 1;
+      const b = document.createElement("button"); b.className = "hs"; b.innerHTML = `<span class="dot">${n}</span><span class="lab">${h.title}</span>`;
+      b.setAttribute("aria-label", h.title);
+      const idx = hsList.length;
+      b.addEventListener("click", () => openPanel(idx));
+      hsHost.appendChild(b);
+      hsList.push({h, el:b, v:new Vector3(...h.anchor)});
+    });
+    if(panelIdx >= 0) closePanel();
+  }
+  const pv = new Vector3();
+  function updateHotspots(){
+    const w = innerWidth, h = innerHeight;
+    hsList.forEach(s => {
+      pv.copy(s.v).project(camera);
+      const vis = pv.z < 1 && pv.z > -1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05;
+      s.el.classList.toggle("hide", !vis);
+      if(vis){ s.el.style.transform = `translate(${(pv.x*.5 + .5)*w}px, ${(-pv.y*.5 + .5)*h}px) translate(-13px,-50%)`; s.el.classList.toggle("far", camera.position.distanceTo(s.v) > 700); }
+    });
+  }
+  function openPanel(i){
+    panelIdx = i; const s = hsList[i]; if(!s) return;
+    const e = ERAS[eraIdx];
+    $("pEyebrow").textContent = e.tag + " · " + (i + 1) + " of " + hsList.length;
+    $("pTitle").textContent = s.h.title; $("pBody").innerHTML = s.h.body; $("pWhy").innerHTML = "<strong>Why it matters:</strong> " + s.h.why;
+    $("pScroll").scrollTop = 0;
+    $("panel").classList.add("open"); $("panel").setAttribute("aria-hidden", "false");
+  }
+  function closePanel(){ panelIdx = -1; $("panel").classList.remove("open"); $("panel").setAttribute("aria-hidden", "true"); }
+  $("pClose").addEventListener("click", closePanel);
+  $("pPrev").addEventListener("click", () => openPanel((panelIdx - 1 + hsList.length) % hsList.length));
+  $("pNext").addEventListener("click", () => openPanel((panelIdx + 1) % hsList.length));
+
+  /* =====================================================================
+     LOOP
+     ===================================================================== */
+  const clock = new THREE.Clock();
+  let elapsed = 0, perfN = 0, perfT = 0;
+  const m4 = new Matrix4(), tq = new Quaternion(), ts = new Vector3(1, 1, 1), tp = new Vector3();
+  function frame(){
+    requestAnimationFrame(frame);
+    const dt = Math.min(clock.getDelta(), .1); elapsed += dt;
+    // year animation (era chips)
+    if(yearAnim){ yearAnim.t = Math.min(1, yearAnim.t + dt/1.8); setYear(yearAnim.from + (yearAnim.to - yearAnim.from)*ease(yearAnim.t)); if(yearAnim.t >= 1) yearAnim = null; }
+    updateTimed(dt);
+    // camera
+    if(tween){ tween.t = Math.min(1, tween.t + dt/tween.dur); const k = ease(tween.t); camera.position.lerpVectors(tween.p0, tween.p1, k); camera.quaternion.slerpQuaternions(tween.q0, tween.q1, k); if(tween.t >= 1){ const d = tween.done; tween = null; if(d) d(); } }
+    else if(camMode === "stand") updateStand(dt);
+    else if(camMode === "fly"){ controls.update(); if(camera.fov !== 60){ camera.fov = 60; camera.updateProjectionMatrix(); } }
+    // time-of-day blending
+    const T = todState.target;
+    const kk = Math.min(1, dt*1.5);
+    todState.night += (T.night - todState.night)*kk; todState.exp += (T.exp - todState.exp)*kk; todState.fog.lerp(new Color(T.fog), kk); todState.fogD += (T.fogD - todState.fogD)*kk;
+    const haze = (year >= 1900 && year < 1950) ? 1.2 : 1;
+    scene.fog.color.copy(todState.fog); scene.fog.density = todState.fogD*haze;
+    renderer.toneMappingExposure = todState.exp;
+    nightMats.forEach(({m, k}) => { m.emissiveIntensity = todState.night*k; });
+    lampHeads.forEach(s => { s.material.opacity = todState.night*.8; });
+    bloom.strength = .12 + todState.night*.7; bloom.threshold = .92 - todState.night*.1;
+    // sun + shadow follow the area in view
+    const focus = camMode === "fly" ? controls.target : camera.position;
+    sun.target.position.set(focus.x, 0, focus.z);
+    sun.position.copy(sun.target.position).addScaledVector(sunDir, 1200);
+    // water
+    if(water){ water.material.uniforms.time.value += dt*.6; }
+    else if(simpleWater){ waterNormals.offset.x += dt*.004; waterNormals.offset.y += dt*.002; }
+    // ships
+    ships.forEach(s => { if(!s.obj.visible) return; if(s.speed){ s.obj.position.z += s.speed*s.dir*dt*2; if(s.obj.position.z > 1600) s.obj.position.z = -1600; if(s.obj.position.z < -1600) s.obj.position.z = 1600; } s.obj.position.y = Math.sin(elapsed*.8 + s.phase)*.15; s.obj.rotation.z = Math.sin(elapsed*.6 + s.phase)*.012; });
+    movers.forEach(m => { if(!m.obj.visible) return; m.obj.position.z += m.speed*m.dir*dt; if(m.obj.position.z > 420) m.obj.position.z = -420; if(m.obj.position.z < -420) m.obj.position.z = 420; });
+    // crowd: grows over the decades
+    const shown = Math.round(crowd.people.length*Math.min(1, Math.max(.15, (year - 1843)/70)));
+    crowd.people.forEach((p, i) => {
+      const vis = i < shown && year >= p.born;
+      if(vis){ p.z += p.v*dt; if(p.z > 360) p.z = -360; if(p.z < -360) p.z = 360; tp.set(p.x, QUAY, p.z); ts.setScalar(1); }
+      else { tp.set(0, -100, 0); ts.setScalar(.001); }
+      m4.compose(tp, tq, ts); crowd.im.setMatrixAt(i, m4);
+    });
+    crowd.im.instanceMatrix.needsUpdate = true;
+    // chimney smoke
+    smokes.forEach(s => { s.puffs.forEach((p, i) => { const k = (elapsed*.06 + i/s.puffs.length + s.phase) % 1; p.position.set(s.x - k*30*s.scale, s.y + k*60*s.scale, s.z + Math.sin(k*5 + i)*3); const sc = (6 + k*30)*s.scale; p.scale.set(sc, sc, 1); p.material.opacity = .45*(1 - k)*(year >= 1905 ? 1 : 0); }); });
+    updateHotspots();
+    composer.render(dt);
+    // adaptive quality: step down if the device struggles
+    if(document.body.classList.contains("running")){ perfN++; perfT += dt; if(perfN === 120){ const avg = perfT/120; if(avg > 1/24 && quality.level !== "low"){ setQuality(quality.level === "high" ? "medium" : "low"); toast("Graphics set to " + QL[quality.level] + " for smoother movement."); } perfN = 0; perfT = 0; } }
+  }
+  window.addEventListener("resize", () => { camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
+
+  /* warm-up */
+  setLoad(.8, "Lighting the scene…"); await nextFrame();
+  applyTod("day", true);
+  setYear(1839);
+  setView("promenade", true);
+  updateTimed(10);
+  setLoad(.9, "Compiling shaders…"); await nextFrame();
+  try { renderer.compile(scene, camera); } catch(e){}
+  composer.render(0);
+  clock.getDelta();
+  requestAnimationFrame(frame);
+
+  window.BUND = {get state(){ return {year, era:eraIdx, tod, view:currentView, mode:camMode, quality:quality.level}; }, setYear:(y) => setYear(y), setView, applyTod, setQuality, renderer, camera, stand};
+
+  return {
+    enter(){
+      $("loader").classList.add("gone"); setTimeout(() => $("loader").style.display = "none", 1000);
+      document.body.classList.add("running");
+      animateYearTo(1885);
+    }
+  };
+}
+</script>
+</body>
+</html>
