@@ -307,7 +307,9 @@ async function boot(){
       import("three/addons/postprocessing/EffectComposer.js"),
       import("three/addons/postprocessing/RenderPass.js"),
       import("three/addons/postprocessing/UnrealBloomPass.js"),
-      import("three/addons/postprocessing/OutputPass.js")
+      import("three/addons/postprocessing/OutputPass.js"),
+      import("three/addons/postprocessing/ShaderPass.js"),
+      import("three/addons/postprocessing/GTAOPass.js")
     ]);
   } catch(e){ console.warn(e); showError("The 3D engine could not be loaded. Please check your internet connection."); return; }
   try { const c = document.createElement("canvas"); if(!(c.getContext("webgl2") || c.getContext("webgl"))) throw 0; }
@@ -318,7 +320,7 @@ async function boot(){
   try {
     app = await createApp(THREE, {
       OrbitControls:mods[0].OrbitControls, Sky:mods[1].Sky, Water:mods[2].Water,
-      EffectComposer:mods[3].EffectComposer, RenderPass:mods[4].RenderPass, UnrealBloomPass:mods[5].UnrealBloomPass, OutputPass:mods[6].OutputPass
+      EffectComposer:mods[3].EffectComposer, RenderPass:mods[4].RenderPass, UnrealBloomPass:mods[5].UnrealBloomPass, OutputPass:mods[6].OutputPass, ShaderPass:mods[7].ShaderPass, GTAOPass:mods[8].GTAOPass
     });
   } catch(e){ console.error(e); showError("Something went wrong while building the scene."); return; }
   setLoad(1, "Ready.");
@@ -524,15 +526,40 @@ async function createApp(THREE, X){
   buildWater();
 
   /* post-processing */
-  let composer, bloom;
+  let composer, bloom, film, gtao;
+  /* "period photo" look: sepia/black-and-white with film grain before 1949, faded colour until the 1980s */
+  const FilmShader = {
+    uniforms:{tDiffuse:{value:null}, amount:{value:0}, sepia:{value:0}, grain:{value:0}, vignette:{value:.9}, time:{value:0}, fade:{value:0}},
+    vertexShader:`varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }`,
+    fragmentShader:`uniform sampler2D tDiffuse; uniform float amount, sepia, grain, vignette, time, fade; varying vec2 vUv;
+      float rnd(vec2 co){ return fract(sin(dot(co, vec2(12.9898, 78.233)))*43758.5453); }
+      void main(){
+        vec3 c = texture2D(tDiffuse, vUv).rgb;
+        float l = dot(c, vec3(.299, .587, .114));
+        vec3 tone = mix(vec3(l), vec3(l*1.08 + .02, l*.97 + .01, l*.78), sepia);
+        vec3 col = mix(c, tone, amount);
+        col = mix(col, smoothstep(0.02, .98, col), .45*amount);
+        vec3 faded = mix(col, vec3(dot(col, vec3(.333))), .35)*vec3(1.04, 1.0, .9) + vec3(.03, .02, 0.);
+        col = mix(col, faded, fade);
+        col += (rnd(vUv*vec2(1733., 977.) + fract(time)*61.) - .5)*grain;
+        vec2 d = vUv - .5; col *= 1. - dot(d, d)*vignette*(.35 + .65*max(amount, fade));
+        gl_FragColor = vec4(col, 1.);
+      }`
+  };
   function buildComposer(){
     composer = new X.EffectComposer(renderer);
     composer.setPixelRatio(dprFor());
     composer.setSize(innerWidth, innerHeight);
     composer.addPass(new X.RenderPass(scene, camera));
+    gtao = new X.GTAOPass(scene, camera, innerWidth, innerHeight);
+    gtao.updateGtaoMaterial({radius:3.5, distanceExponent:1.4, thickness:2.5, scale:1.2, samples:12});
+    gtao.enabled = quality.level === "high";
+    composer.addPass(gtao);
     bloom = new X.UnrealBloomPass(new Vector2(innerWidth/2, innerHeight/2), .35, .5, .88);
     composer.addPass(bloom);
     composer.addPass(new X.OutputPass());
+    film = new X.ShaderPass(FilmShader);
+    composer.addPass(film);
   }
   buildComposer();
 
@@ -1131,7 +1158,7 @@ async function createApp(THREE, X){
     try { localStorage.setItem("bund-quality", level); } catch(e){}
     renderer.setPixelRatio(dprFor()); composer.setPixelRatio(dprFor()); composer.setSize(innerWidth, innerHeight);
     sun.shadow.mapSize.set(level === "low" ? 1024 : 2048, level === "low" ? 1024 : 2048); if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; }
-    bloom.enabled = level !== "low";
+    bloom.enabled = level !== "low"; if(gtao) gtao.enabled = level === "high";
     buildWater(); applyTod(tod);
   }
   $("qualBtn").addEventListener("click", () => setQuality(quality.level === "high" ? "medium" : quality.level === "medium" ? "low" : "high"));
@@ -1227,6 +1254,11 @@ async function createApp(THREE, X){
     // chimney smoke
     smokes.forEach(s => { s.puffs.forEach((p, i) => { const k = (elapsed*.06 + i/s.puffs.length + s.phase) % 1; p.position.set(s.x - k*30*s.scale, s.y + k*60*s.scale, s.z + Math.sin(k*5 + i)*3); const sc = (6 + k*30)*s.scale; p.scale.set(sc, sc, 1); p.material.opacity = .45*(1 - k)*(year >= 1905 ? 1 : 0); }); });
     updateHotspots();
+    { const u = film.uniforms, y = year;
+      const histT = y < 1949 ? 1 : y < 1955 ? 1 - (y - 1949)/6 : 0;
+      u.amount.value = histT; u.sepia.value = y < 1900 ? .75 : y < 1937 ? .35 : .1;
+      u.fade.value = y >= 1949 && y < 1990 ? Math.min(1, (y - 1949)/6)*(y < 1980 ? 1 : 1 - (y - 1980)/10) : 0;
+      u.grain.value = .05*histT + .025*u.fade.value + .012; u.time.value = elapsed; }
     composer.render(dt);
     // adaptive quality: step down if the device struggles
     if(document.body.classList.contains("running")){ perfN++; perfT += dt; if(perfN === 120){ const avg = perfT/120; if(avg > 1/24 && quality.level !== "low"){ setQuality(quality.level === "high" ? "medium" : "low"); toast("Graphics set to " + QL[quality.level] + " for smoother movement."); } perfN = 0; perfT = 0; } }
